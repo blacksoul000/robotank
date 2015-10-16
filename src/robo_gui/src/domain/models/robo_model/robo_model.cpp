@@ -1,19 +1,22 @@
 #include "robo_model.h"
 #include "sight_model.h"
+#include "track_model.h"
 
 using domain::RoboModel;
 using domain::SightModel;
+using domain::TrackModel;
 
 RoboModel::RoboModel()
 {
     m_sight = new SightModel();
+    m_track = new TrackModel();
 }
 
 RoboModel::~RoboModel()
 {
     delete m_sight;
 //    delete m_status;
-//    delete m_tracking;
+    delete m_track;
 }
 
 SightModel *RoboModel::sight() const
@@ -23,10 +26,10 @@ SightModel *RoboModel::sight() const
 
 //StatusModel *RoboModel::status() const
 //{
-//    return nullptr;
+//    return m_status;
 //}
 
-//TrackingModel *RoboModel::tracking() const
-//{
-//    return nullptr;
-//}
+TrackModel *RoboModel::track() const
+{
+    return m_track;
+}

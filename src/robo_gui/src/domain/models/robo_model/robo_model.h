@@ -5,7 +5,7 @@ namespace domain
 {
     class SightModel;
     class StatusModel;
-    class TrackingModel;
+    class TrackModel;
 
     class RoboModel
     {
@@ -14,12 +14,12 @@ namespace domain
         ~RoboModel();
         SightModel* sight() const;
 //        StatusModel* status() const;
-//        TrackingModel* tracking() const;
+        TrackModel* track() const;
 
     private:
         SightModel* m_sight = nullptr;
         StatusModel* m_status = nullptr;
-        TrackingModel* m_tracking = nullptr;
+        TrackModel* m_track = nullptr;
     };
 }
 

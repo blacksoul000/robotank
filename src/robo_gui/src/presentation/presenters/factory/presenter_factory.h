@@ -21,6 +21,7 @@ namespace presentation
 
     public slots:
         QObject* framePresenter();
+        QObject* trackPresenter();
 
     private:
         class Impl;

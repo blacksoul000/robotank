@@ -2,6 +2,7 @@
 
 #include "robo_model.h"
 #include "sight_model.h"
+#include "track_model.h"
 #include "presenter_factory.h"
 
 #include <ros/ros.h>
@@ -38,8 +39,11 @@ MainWindow::MainWindow(ros::NodeHandle* nh, QObject* parent) :
     d->viewer = new QQuickView;
     d->viewer->rootContext()->setContextProperty("factory",
                         new presentation::PresenterFactory(d->robo, this));
-    d->viewer->setSource(QUrl("qrc:/qml/main.qml"));
+    d->viewer->setSource(QUrl("qrc:/qml/Main.qml"));
     d->viewer->show();
+
+    this->connectStatusModel();
+    this->connectTrackModel();
 }
 
 MainWindow::~MainWindow()
@@ -69,4 +73,22 @@ QImage MainWindow::Impl::mat2QImage(const cv::Mat& image) const
         }
     }
     return res;
+}
+
+void MainWindow::connectStatusModel()
+{
+    qDebug() << Q_FUNC_INFO << "Not Impelemented yet";
+}
+
+void MainWindow::connectTrackModel()
+{
+    connect(d->robo->track(), &domain::TrackModel::trackRequest, this, &MainWindow::onTrackRequest);
+}
+
+void MainWindow::onTrackRequest(const QRect& rect)
+{
+    qDebug() << Q_FUNC_INFO << rect;
+//
+//    //FIXME - delete it
+//    d->robo->track()->setTargetRect(QRect(QPoint(100, 100), QSize(200, 200)));
 }

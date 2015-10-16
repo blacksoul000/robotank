@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/">
-        <file>qml/main.qml</file>
+        <file>qml/Main.qml</file>
+        <file>qml/Target.qml</file>
+        <file>qml/SelectArea.qml</file>
     </qresource>
 </RCC>

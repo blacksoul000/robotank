@@ -1,7 +1,8 @@
 #include "presenter_factory.h"
+#include "robo_model.h"
 
 #include "frame_presenter.h"
-#include "robo_model.h"
+#include "track_presenter.h"
 
 #include <QtQml>
 
@@ -29,4 +30,9 @@ PresenterFactory::~PresenterFactory()
 QObject* PresenterFactory::framePresenter()
 {
     return new FramePresenter(d->model, this);
+}
+
+QObject* PresenterFactory::trackPresenter()
+{
+    return new TrackPresenter(d->model, this);
 }

@@ -18,6 +18,13 @@ namespace robo
         ~MainWindow();
 
     private:
+        void connectStatusModel();
+        void connectTrackModel();
+
+    private slots:
+        void onTrackRequest(const QRect& rect);
+
+    private:
         class Impl;
         Impl* d;
     };

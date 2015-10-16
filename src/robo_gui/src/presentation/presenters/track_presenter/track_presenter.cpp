@@ -1,0 +1,46 @@
+#include "track_presenter.h"
+
+#include "robo_model.h"
+#include "track_model.h"
+
+#include <QRect>
+#include <QDebug>
+
+using presentation::TrackPresenter;
+
+class TrackPresenter::Impl
+{
+public:
+    domain::RoboModel* model = nullptr;
+    QRect rect;
+};
+
+TrackPresenter::TrackPresenter(domain::RoboModel *model, QObject *parent) :
+    QObject(parent),
+    d(new Impl)
+{
+    d->model = model;
+    connect(model->track(), &domain::TrackModel::targetRectChanged,
+            this, &TrackPresenter::onTargetRectChanged);
+}
+
+TrackPresenter::~TrackPresenter()
+{
+    delete d;
+}
+
+void TrackPresenter::onTargetRectChanged(const QRect& rect)
+{
+    d->rect = rect;
+    emit targetRectChanged(rect);
+}
+
+void TrackPresenter::onTrackRequest(const QRect& rect)
+{
+    d->model->track()->trackRequest(rect);
+}
+
+QRect TrackPresenter::targetRect() const
+{
+    return d->rect;
+}
