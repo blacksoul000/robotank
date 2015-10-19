@@ -2,7 +2,7 @@
 #define TRACK_MODEL_H
 
 #include <QObject>
-#include <QRect>
+#include <QRectF>
 
 namespace domain
 {
@@ -13,12 +13,12 @@ namespace domain
         TrackModel(QObject* parent = nullptr);
         ~TrackModel();
 
-        void setTargetRect(const QRect& rect);
-        QRect targetRect() const;
+        void setTargetRect(const QRectF& rect);
+        QRectF targetRect() const;
 
     signals:
-        void targetRectChanged(const QRect& rect);
-        void trackRequest(const QRect& rect);
+        void targetRectChanged(const QRectF& rect);
+        void trackRequest(const QRectF& rect);
 
     private:
         class Impl;

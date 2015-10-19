@@ -22,7 +22,7 @@ namespace robo
         void connectTrackModel();
 
     private slots:
-        void onTrackRequest(const QRect& rect);
+        void onTrackRequest(const QRectF& rect);
 
     private:
         class Impl;

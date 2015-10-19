@@ -56,13 +56,25 @@ void FramePresenter::onFrameChanged(const QImage& frame)
             QVideoFrame::pixelFormatFromImageFormat(frame.format());
 
     if (d->format.frameHeight() != frame.height()
-            || d->format.frameWidth() != frame.width()
-            || pixelFormat != d->format.pixelFormat())
+            || d->format.frameWidth() != frame.width())
     {
         this->closeSurface();
         d->format = QVideoSurfaceFormat(frame.size(), pixelFormat);
+//        d->format = QVideoSurfaceFormat(frame.size(), QVideoFrame::Format_YUV420P);
         d->surface->start(d->format);
     }
 
+//    qDebug() << "1";
+//    QVideoFrame videoFrame(frame.byteCount(), frame.size(), frame.bytesPerLine(), QVideoFrame::Format_YUV420P);
+//    qDebug() << "2";
+//    videoFrame.map(QAbstractVideoBuffer::WriteOnly);
+//    qDebug() << "3" << frame.size() << frame.byteCount() << frame.format();
+//    memcpy(videoFrame.bits(), frame.bits(), frame.byteCount());
+//    qDebug() << "4";
+//    videoFrame.unmap();
+//    qDebug() << "5";
+
+//    d->surface->present(videoFrame);
+//    qDebug() << "6";
     d->surface->present(QVideoFrame(frame));
 }

@@ -5,7 +5,7 @@ using domain::TrackModel;
 class TrackModel::Impl
 {
 public:
-    QRect targetRect;
+    QRectF targetRect;
 };
 
 TrackModel::TrackModel(QObject* parent) :
@@ -19,7 +19,7 @@ TrackModel::~TrackModel()
     delete d;
 }
 
-void TrackModel::setTargetRect(const QRect& rect)
+void TrackModel::setTargetRect(const QRectF& rect)
 {
     if (rect == d->targetRect) return;
     d->targetRect = rect;
@@ -27,7 +27,7 @@ void TrackModel::setTargetRect(const QRect& rect)
     emit targetRectChanged(rect);
 }
 
-QRect TrackModel::targetRect() const
+QRectF TrackModel::targetRect() const
 {
     return d->targetRect;
 }

@@ -12,7 +12,7 @@ class TrackPresenter::Impl
 {
 public:
     domain::RoboModel* model = nullptr;
-    QRect rect;
+    QRectF rect;
 };
 
 TrackPresenter::TrackPresenter(domain::RoboModel *model, QObject *parent) :
@@ -29,18 +29,18 @@ TrackPresenter::~TrackPresenter()
     delete d;
 }
 
-void TrackPresenter::onTargetRectChanged(const QRect& rect)
+void TrackPresenter::onTargetRectChanged(const QRectF& rect)
 {
     d->rect = rect;
     emit targetRectChanged(rect);
 }
 
-void TrackPresenter::onTrackRequest(const QRect& rect)
+void TrackPresenter::onTrackRequest(const QRectF& rect)
 {
     d->model->track()->trackRequest(rect);
 }
 
-QRect TrackPresenter::targetRect() const
+QRectF TrackPresenter::targetRect() const
 {
     return d->rect;
 }

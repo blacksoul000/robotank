@@ -15,21 +15,21 @@ namespace presentation
     {
         Q_OBJECT
     public:
-        Q_PROPERTY(QRect targetRect READ targetRect NOTIFY targetRectChanged);
+        Q_PROPERTY(QRectF targetRect READ targetRect NOTIFY targetRectChanged);
 
         TrackPresenter(domain::RoboModel* model, QObject* parent = nullptr);
         ~TrackPresenter() override;
 
-        QRect targetRect() const;
+        QRectF targetRect() const;
 
     public slots:
-        void onTrackRequest(const QRect& rect);
+        void onTrackRequest(const QRectF& rect);
 
     signals:
-        void targetRectChanged(const QRect& rect);
+        void targetRectChanged(const QRectF& rect);
 
     private slots:
-        void onTargetRectChanged(const QRect& rect);
+        void onTargetRectChanged(const QRectF& rect);
 
     private:
         class Impl;

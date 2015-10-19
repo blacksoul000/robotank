@@ -30,3 +30,8 @@ QImage SightModel::frame() const
 {
     return d->frame;
 }
+
+QSize SightModel::size() const
+{
+    return d->frame.size();
+}

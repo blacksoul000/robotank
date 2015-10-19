@@ -1,9 +1,11 @@
 #ifndef TRACKER_H
 #define TRACKER_H
 
-namespace ros
+#include <opencv2/highgui/highgui.hpp>
+
+namespace cv
 {
-    class NodeHandle;
+    class Mat;
 }
 
 namespace va
@@ -11,8 +13,14 @@ namespace va
     class Tracker
     {
     public:
-        Tracker(ros::NodeHandle* nh);
+        Tracker();
         ~Tracker();
+
+        void start(const cv::Rect& rect);
+        void stop();
+        bool isTracking() const;
+        void track(cv::Mat& image);
+        cv::Rect target() const;
 
     private:
         class Impl;

@@ -15,6 +15,7 @@ namespace domain
 
         void setFrame(const QImage& frame);
         QImage frame() const;
+        QSize size() const;
 
     signals:
         void frameChanged(const QImage& frame);

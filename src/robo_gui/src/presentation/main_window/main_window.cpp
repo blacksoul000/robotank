@@ -5,6 +5,8 @@
 #include "track_model.h"
 #include "presenter_factory.h"
 
+#include "tracker/Rect.h"
+
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
 #include <opencv2/highgui/highgui.hpp>
@@ -19,15 +21,24 @@ using robo::MainWindow;
 class MainWindow::Impl
 {
 public:
-    Impl(ros::NodeHandle* nh) : it(*nh) {}
+    Impl(ros::NodeHandle* nh) : it(*nh) 
+    {
+        trackPub = nh->advertise< tracker::Rect >("tracker/toggle", 1);
+        trackSub = nh->subscribe("tracker/target", 1,
+                   &MainWindow::Impl::onNewTarget, this);
+    }
     image_transport::ImageTransport it;
-    image_transport::Subscriber imageSubscriber = it.subscribe("camera/image", 1,
+    image_transport::Subscriber imageSub = it.subscribe("camera/image", 1,
                     boost::bind(&MainWindow::Impl::onNewFrame, this, _1));
+
+    ros::Publisher trackPub;
+    ros::Subscriber trackSub;
 
     domain::RoboModel* robo = nullptr;
     QQuickView* viewer = nullptr;
 
     void onNewFrame(const sensor_msgs::ImageConstPtr& msg);
+    void onNewTarget(const tracker::RectPtr &rect);
     QImage mat2QImage(const cv::Mat& image) const;
 };
 
@@ -59,6 +70,12 @@ void MainWindow::Impl::onNewFrame(const sensor_msgs::ImageConstPtr &msg)
     robo->sight()->setFrame(this->mat2QImage(frame));
 }
 
+void MainWindow::Impl::onNewTarget(const tracker::RectPtr& rect)
+{
+    QRect r(rect->x, rect->y, rect->width, rect->height);
+    robo->track()->setTargetRect(r);
+}
+
 QImage MainWindow::Impl::mat2QImage(const cv::Mat& image) const
 {
     QImage res = QImage(image.cols, image.rows, QImage::Format_RGB32);
@@ -73,6 +90,18 @@ QImage MainWindow::Impl::mat2QImage(const cv::Mat& image) const
         }
     }
     return res;
+//    static QVector<QRgb>  sColorTable;
+
+//    // only create our color table once
+//    if ( sColorTable.isEmpty() )
+//    {
+//       for ( int i = 0; i < 256; ++i )
+//          sColorTable.push_back( qRgb( i, i, i ) );
+//    }
+
+//    QImage res(image.data, image.cols, image.rows, image.step, QImage::Format_Indexed8);
+//    res.setColorTable(sColorTable);
+//    return res;
 }
 
 void MainWindow::connectStatusModel()
@@ -85,10 +114,13 @@ void MainWindow::connectTrackModel()
     connect(d->robo->track(), &domain::TrackModel::trackRequest, this, &MainWindow::onTrackRequest);
 }
 
-void MainWindow::onTrackRequest(const QRect& rect)
+void MainWindow::onTrackRequest(const QRectF& rect)
 {
     qDebug() << Q_FUNC_INFO << rect;
-//
-//    //FIXME - delete it
-//    d->robo->track()->setTargetRect(QRect(QPoint(100, 100), QSize(200, 200)));
+    tracker::RectPtr r(new tracker::Rect);
+    r->x = rect.x();
+    r->y = rect.y();
+    r->width = rect.width();
+    r->height = rect.height();
+    d->trackPub.publish(r);
 }

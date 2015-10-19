@@ -8,10 +8,10 @@ add_definitions(-std=c++11)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
-  sensor_msgs
   std_msgs
   image_transport
   cv_bridge
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -55,11 +55,10 @@ set(LIBS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+  FILES
+  Rect.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -76,10 +75,10 @@ set(LIBS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   sensor_msgs#   std_msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -113,7 +112,7 @@ set(LIBS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES tracker
-#  CATKIN_DEPENDS roscpp sensor_msgs std_msgs
+  CATKIN_DEPENDS roscpp sensor_msgs std_msgs message_runtime
 #  DEPENDS system_lib
 )
 
@@ -123,7 +122,11 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-# include_directories(include)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/RecurseDirs.cmake)
+HEADER_DIRECTORIES(DIRS)
+include_directories(${DIRS})
+
+include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
