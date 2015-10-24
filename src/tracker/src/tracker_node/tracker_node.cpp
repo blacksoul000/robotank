@@ -1,5 +1,6 @@
 #include "tracker_node.h"
-#include "tracker.h"
+#include "tracker_factory.h"
+#include "trackers.h"
 
 #include "tracker/Rect.h"
 
@@ -29,7 +30,9 @@ public:
     ros::Publisher targetPub;
 
     bool tracking = false;
-    va::Tracker* tracker = nullptr;
+    va::ITracker* tracker = nullptr;
+//    va::TrackerCode trackAlgo = va::TrackerCode::Unknown;
+    va::TrackerCode trackAlgo = va::TrackerCode::Tld;
 
     void onNewFrame(const sensor_msgs::ImageConstPtr& msg);
     void onToggleRequest(const tracker::RectPtr &rect);
@@ -66,7 +69,7 @@ void TrackerNode::Impl::onToggleRequest(const tracker::RectPtr& rect)
     if (start)
     {
         cv::Rect cvRect(rect->x, rect->y, rect->width, rect->height);
-        tracker = new va::Tracker();
+        tracker = va::TrackerFactory::makeTracker(trackAlgo);
         tracker->start(cvRect);
     }
     else if(tracker)

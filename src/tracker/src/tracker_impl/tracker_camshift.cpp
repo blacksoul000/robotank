@@ -1,11 +1,10 @@
-#include "tracker.h"
+#include "tracker_camshift.h"
 
-#include <opencv2/highgui/highgui.hpp>
 #include "opencv2/video/tracking.hpp"
 
 #include <iostream>
 
-using va::Tracker;
+using va::TrackerCamshift;
 using namespace cv;
 
 namespace
@@ -16,7 +15,7 @@ namespace
     const int hsize = 16;
 }
 
-class Tracker::Impl
+class TrackerCamshift::Impl
 {
 public:
     Rect target;
@@ -29,38 +28,39 @@ public:
     Mat frame, hsv, hue, mask, hist = Mat::zeros(200, 320, CV_8UC3), backproj;
 };
 
-Tracker::Tracker() :
+TrackerCamshift::TrackerCamshift() :
+    va::ITracker(),
     d(new Impl)
 {
 }
 
-Tracker::~Tracker()
+TrackerCamshift::~TrackerCamshift()
 {
     delete d;
 }
 
-void Tracker::start(const cv::Rect& rect)
+void TrackerCamshift::start(const cv::Rect& rect)
 {
     d->tracking = true;
     d->target = rect;
 }
 
-void Tracker::stop()
+void TrackerCamshift::stop()
 {
     d->tracking = false;
 }
 
-bool Tracker::isTracking() const
+bool TrackerCamshift::isTracking() const
 {
     return d->tracking;
 }
 
-cv::Rect Tracker::target() const
+cv::Rect TrackerCamshift::target() const
 {
     return d->trackWindow;
 }
 
-void Tracker::track(cv::Mat& image)
+void TrackerCamshift::track(const cv::Mat& image)
 {
     cvtColor(image, d->hsv, COLOR_BGR2HSV);
 

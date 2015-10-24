@@ -2,5 +2,7 @@
 src/CMakeLists.txt
 */CMakeLists.txt.user
 
-build.sh
-kill.sh
+build
+devel
+
+*.sh

@@ -69,6 +69,5 @@ void VideoSource::capture()
 
     msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", frame).toImageMsg();
     d->publisher.publish(msg);
-    cv::waitKey(1);
     ros::spinOnce();
 }

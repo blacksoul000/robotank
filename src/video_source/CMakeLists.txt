@@ -26,7 +26,7 @@ set(CMAKE_AUTOMOC ON)
 
 set(LIBS
     Qt5::Core
-#    ${OpenCV_LIBS}
+    ${OpenCV_LIBS}
 )
 
 ## Uncomment this if the package has a setup.py. This macro ensures
