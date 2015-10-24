@@ -11,7 +11,7 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "video_source");
     ros::NodeHandle nh;
 
-    video::VideoSource source(&nh, 30);
+    video::VideoSource source(&nh, 25);
     if (!source.start(0)) return 1;
 
     return app.exec();

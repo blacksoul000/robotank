@@ -28,6 +28,7 @@ public:
                    &MainWindow::Impl::onNewTarget, this);
     }
     image_transport::ImageTransport it;
+
     image_transport::Subscriber imageSub = it.subscribe("camera/image", 1,
                     boost::bind(&MainWindow::Impl::onNewFrame, this, _1));
 
@@ -66,7 +67,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::Impl::onNewFrame(const sensor_msgs::ImageConstPtr &msg)
 {
-    cv::Mat frame =  cv_bridge::toCvShare(msg, "bgr8")->image;
+    cv::Mat frame =  cv_bridge::toCvShare(msg, "rgb8")->image;
     robo->sight()->setFrame(this->mat2QImage(frame));
 }
 
@@ -78,30 +79,8 @@ void MainWindow::Impl::onNewTarget(const tracker::RectPtr& rect)
 
 QImage MainWindow::Impl::mat2QImage(const cv::Mat& image) const
 {
-    QImage res = QImage(image.cols, image.rows, QImage::Format_RGB32);
-    const unsigned char* data = image.data;
-    for(int y = 0; y < image.rows; ++y, data += image.cols*image.elemSize())
-    {
-        for(int x = 0; x < image.cols; ++x)
-        {
-            QRgb* p = ((QRgb*)res.scanLine (y)) + x;
-            *p = qRgb(data[x * image.channels()+2], data[x * image.channels()+1],
-                    data[x * image.channels()]);
-        }
-    }
-    return res;
-//    static QVector<QRgb>  sColorTable;
-
-//    // only create our color table once
-//    if ( sColorTable.isEmpty() )
-//    {
-//       for ( int i = 0; i < 256; ++i )
-//          sColorTable.push_back( qRgb( i, i, i ) );
-//    }
-
-//    QImage res(image.data, image.cols, image.rows, image.step, QImage::Format_Indexed8);
-//    res.setColorTable(sColorTable);
-//    return res;
+    QImage res(image.data, image.cols, image.rows, image.step, QImage::Format_RGB888);
+    return res.convertToFormat(QImage::Format_RGB32);
 }
 
 void MainWindow::connectStatusModel()
