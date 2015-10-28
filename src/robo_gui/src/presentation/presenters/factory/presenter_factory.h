@@ -10,8 +10,6 @@ namespace domain
 
 namespace presentation
 {
-    class FramePresenter;
-
     class PresenterFactory : public QObject
     {
         Q_OBJECT
@@ -22,6 +20,7 @@ namespace presentation
     public slots:
         QObject* framePresenter();
         QObject* trackPresenter();
+        QObject* settingsPresenter();
 
     private:
         class Impl;

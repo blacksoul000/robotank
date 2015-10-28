@@ -151,7 +151,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/RecurseDirs.cmake)
 file(GLOB_RECURSE SOURCES src *.h *.cpp)
 HEADER_DIRECTORIES(DIRS)
 
-qt5_add_resources(RESOURCES src/qml.qrc)
+qt5_add_resources(RESOURCES src/qml.qrc src/resources.qrc)
 
 include_directories(${DIRS})
 ## Declare a C++ executable

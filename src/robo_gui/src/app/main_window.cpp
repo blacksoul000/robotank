@@ -3,6 +3,7 @@
 #include "robo_model.h"
 #include "sight_model.h"
 #include "track_model.h"
+#include "settings_model.h"
 #include "presenter_factory.h"
 
 #include "tracker/Rect.h"
@@ -12,8 +13,10 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <cv_bridge/cv_bridge.h>
 
+#include <QCoreApplication>
 #include <QQmlContext>
 #include <QQuickView>
+#include <QQmlEngine>
 #include <QDebug>
 
 using robo::MainWindow;
@@ -21,12 +24,14 @@ using robo::MainWindow;
 class MainWindow::Impl
 {
 public:
-    Impl(ros::NodeHandle* nh) : it(*nh) 
+    Impl(ros::NodeHandle* nh) : nh(nh), it(*nh)
     {
+        nh->setParam("image_transport", "compressed");
         trackPub = nh->advertise< tracker::Rect >("tracker/toggle", 1);
         trackSub = nh->subscribe("tracker/target", 1,
                    &MainWindow::Impl::onNewTarget, this);
     }
+    ros::NodeHandle* nh;
     image_transport::ImageTransport it;
 
     image_transport::Subscriber imageSub = it.subscribe("camera/image", 1,
@@ -56,6 +61,9 @@ MainWindow::MainWindow(ros::NodeHandle* nh, QObject* parent) :
 
     this->connectStatusModel();
     this->connectTrackModel();
+    this->connectSettingsModel();
+
+    connect(d->viewer->engine(), &QQmlEngine::quit, qApp, &QCoreApplication::quit);
 }
 
 MainWindow::~MainWindow()
@@ -93,6 +101,11 @@ void MainWindow::connectTrackModel()
     connect(d->robo->track(), &domain::TrackModel::trackRequest, this, &MainWindow::onTrackRequest);
 }
 
+void MainWindow::connectSettingsModel()
+{
+    connect(d->robo->settings(), &domain::SettingsModel::qualityChanged, this, &MainWindow::onChangeVideoQuality);
+}
+
 void MainWindow::onTrackRequest(const QRectF& rect)
 {
     qDebug() << Q_FUNC_INFO << rect;
@@ -102,4 +115,10 @@ void MainWindow::onTrackRequest(const QRectF& rect)
     r->width = rect.width();
     r->height = rect.height();
     d->trackPub.publish(r);
+}
+
+void MainWindow::onChangeVideoQuality(int percent)
+{
+    qDebug() << Q_FUNC_INFO << percent;
+    d->nh->setParam("/camera/image/compressed/jpeg_quality", percent);
 }

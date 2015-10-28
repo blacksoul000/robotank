@@ -20,9 +20,11 @@ namespace robo
     private:
         void connectStatusModel();
         void connectTrackModel();
+        void connectSettingsModel();
 
     private slots:
         void onTrackRequest(const QRectF& rect);
+        void onChangeVideoQuality(int percent);
 
     private:
         class Impl;

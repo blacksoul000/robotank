@@ -3,11 +3,13 @@
 
 #include "frame_presenter.h"
 #include "track_presenter.h"
+#include "settings_presenter.h"
 
 #include <QtQml>
 
 using presentation::PresenterFactory;
 using presentation::FramePresenter;
+using presentation::SettingsPresenter;
 
 class PresenterFactory::Impl
 {
@@ -35,4 +37,9 @@ QObject* PresenterFactory::framePresenter()
 QObject* PresenterFactory::trackPresenter()
 {
     return new TrackPresenter(d->model, this);
+}
+
+QObject* PresenterFactory::settingsPresenter()
+{
+    return new SettingsPresenter(d->model, this);
 }

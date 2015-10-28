@@ -1,45 +1,55 @@
 import QtQuick 2.0
-import QtMultimedia 5.0
+import QtQuick.Controls 1.4
 
-Rectangle {
-    id: page
-    width: 640;
-    height: 480
-    color: "black"
+Item {
+    visible: true
+    width: 800
+    height: 600
 
-    property QtObject framePresenter: factory.framePresenter()
-    property QtObject trackPresenter: factory.trackPresenter()
-    property double scaleX: video.sourceRect.width / page.width
-    property double scaleY: video.sourceRect.height / page.height
-
-    VideoOutput {
-        id: video
-        anchors.fill: parent;
-        source: framePresenter;
+    Rectangle {
+        color: "#212126"
+        anchors.fill: parent
     }
 
-    Target {
-        id: target
-        Connections {
-            target: trackPresenter
-            onTargetRectChanged: {
-                target.x = rect.x / page.scaleX
-                target.y = rect.y / page.scaleY
-                target.width = rect.width / page.scaleX
-                target.height = rect.height / page.scaleY
+    StackView {
+        id: stackView
+        anchors.fill: parent
+        // Implements back key navigation
+        focus: true
+        initialItem: Qt.resolvedUrl("qrc:///qml/Combat.qml")
+        Keys.onReleased: {
+            if (event.key === Qt.Key_Back || event.key === Qt.Key_Escape) {
+                if (stackView.depth > 1) {
+                    stackView.pop();
+                    event.accepted = true;
+                } else {
+                    Qt.quit();
+                }
             }
         }
-    }
+        delegate: StackViewDelegate {
 
-    SelectArea {
-        anchors.fill: parent
-        onAccepted: {
-            r.x = r.x * page.scaleX
-            r.y = r.y * page.scaleY
-            r.width = r.width * page.scaleX
-            r.height = r.height * page.scaleY
+            function transitionFinished(properties)
+            {
+                properties.exitItem.opacity = 1
+            }
 
-            trackPresenter.onTrackRequest(r)
+            pushTransition: StackViewTransition {
+                PropertyAnimation {
+                    target: enterItem
+                    property: "opacity"
+                    from: 0
+                    to: 1
+                    duration: 10
+                }
+                PropertyAnimation {
+                    target: exitItem
+                    property: "opacity"
+                    from: 1
+                    to: 0
+                    duration: 10
+                }
+            }
         }
     }
 }
