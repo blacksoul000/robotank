@@ -126,6 +126,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/RecurseDirs.cmake)
 HEADER_DIRECTORIES(DIRS)
 include_directories(${DIRS})
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../common ${CMAKE_BINARY_DIR}/common)
 include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}

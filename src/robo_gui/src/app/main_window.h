@@ -25,6 +25,7 @@ namespace robo
     private slots:
         void onTrackRequest(const QRectF& rect);
         void onChangeVideoQuality(int percent);
+        void onChangeTracker(int tracker);
 
     private:
         class Impl;

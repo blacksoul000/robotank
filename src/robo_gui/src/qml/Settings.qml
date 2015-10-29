@@ -67,9 +67,10 @@ Item {
                 text: "Select"
                 width: 100
                 checkable: true
+                checked: (item.code === presenter.trackerCode)
                 exclusiveGroup: selectedTracker
                 onClicked: {
-                    console.log(item.text, item.code)
+                    presenter.trackerCode = item.code
                 }
             }
         }
@@ -93,15 +94,16 @@ Item {
             maximumValue: 100
             width: 300
             stepSize: 1
+            value: presenter.quality
             updateValueWhileDragging: false
-
-            onValueChanged: {
-                presenter.setQuality(value)
-            }
         }
         Repeater {
             model: trackers.count * 2
             delegate: trackerDelegate
         }
+    }
+
+    Component.onCompleted: {
+        presenter.loadSettings()
     }
 }

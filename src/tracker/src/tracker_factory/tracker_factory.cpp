@@ -4,6 +4,7 @@
 #include "tracker_keypoints.h"
 
 using namespace va;
+using robotank::TrackerCode;
 
 ITracker* TrackerFactory::makeTracker(TrackerCode code)
 {

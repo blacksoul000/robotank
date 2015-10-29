@@ -9,7 +9,7 @@ namespace va
     class TrackerFactory
     {
     public:
-        static ITracker* makeTracker(TrackerCode code);
+        static ITracker* makeTracker(robotank::TrackerCode code);
 
     private:
         TrackerFactory(){}

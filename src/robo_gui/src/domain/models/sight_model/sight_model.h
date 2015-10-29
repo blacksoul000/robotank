@@ -21,6 +21,9 @@ namespace domain
         void frameChanged(const QImage& frame);
 
     private:
+        void readSettings();
+
+    private:
         class Impl;
         Impl* d;
     };

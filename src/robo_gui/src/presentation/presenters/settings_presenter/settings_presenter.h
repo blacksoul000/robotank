@@ -15,17 +15,22 @@ namespace presentation
         Q_OBJECT
     public:
         Q_PROPERTY(qreal quality READ quality WRITE setQuality NOTIFY qualityChanged)
+        Q_PROPERTY(int trackerCode READ trackerCode WRITE setTrackerCode NOTIFY trackerCodeChanged)
 
         SettingsPresenter(domain::RoboModel* model, QObject* parent = nullptr);
         ~SettingsPresenter() override;
 
         qreal quality() const;
+        int trackerCode() const;
 
     public slots:
-        void setQuality(qreal quality) const;
+        void setQuality(qreal quality);
+        void setTrackerCode(int code);
+        void loadSettings();
 
     signals:
         void qualityChanged(qreal quality);
+        void trackerCodeChanged(int code);
 
     private:
         class Impl;

@@ -31,8 +31,7 @@ public:
 
     bool tracking = false;
     va::ITracker* tracker = nullptr;
-//    va::TrackerCode trackAlgo = va::TrackerCode::Unknown;
-    va::TrackerCode trackAlgo = va::TrackerCode::Tld;
+    robotank::TrackerCode trackAlgo = robotank::TrackerCode::Unknown;
 
     void onNewFrame(const sensor_msgs::ImageConstPtr& msg);
     void onToggleRequest(const tracker::RectPtr &rect);
@@ -81,6 +80,11 @@ void TrackerNode::Impl::onToggleRequest(const tracker::RectPtr& rect)
         targetPub.publish(rect);
     }
 }
+
+//void TrackerNode::Impl::onSwitchTrackerRequest(const tracker::SwitchTrackerPtr& request)
+//{
+
+//}
 
 void TrackerNode::Impl::publishTarget(const cv::Rect& rect)
 {

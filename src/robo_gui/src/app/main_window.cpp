@@ -7,6 +7,7 @@
 #include "presenter_factory.h"
 
 #include "tracker/Rect.h"
+#include "trackers.h"
 
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
@@ -104,6 +105,7 @@ void MainWindow::connectTrackModel()
 void MainWindow::connectSettingsModel()
 {
     connect(d->robo->settings(), &domain::SettingsModel::qualityChanged, this, &MainWindow::onChangeVideoQuality);
+    connect(d->robo->settings(), &domain::SettingsModel::trackerChanged, this, &MainWindow::onChangeTracker);
 }
 
 void MainWindow::onTrackRequest(const QRectF& rect)
@@ -121,4 +123,9 @@ void MainWindow::onChangeVideoQuality(int percent)
 {
     qDebug() << Q_FUNC_INFO << percent;
     d->nh->setParam("/camera/image/compressed/jpeg_quality", percent);
+}
+
+void MainWindow::onChangeTracker(int tracker)
+{
+    qDebug() << Q_FUNC_INFO << tracker;
 }

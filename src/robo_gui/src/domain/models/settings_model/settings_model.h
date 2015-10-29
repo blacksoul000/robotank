@@ -15,8 +15,12 @@ namespace domain
         void setQuality(int quality);
         int quality() const;
 
+        void setTracker(int tracker);
+        int tracker() const;
+
     signals:
         void qualityChanged(int quality);
+        void trackerChanged(int tracker);
 
     private:
         class Impl;
