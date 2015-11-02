@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   image_transport
   message_generation
+#  dynamic_reconfigure
 )
 
 ## System dependencies are found with CMake's conventions
@@ -67,6 +68,7 @@ set(LIBS
 add_message_files(
   FILES
   Rect.msg
+  TrackerSelector.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -105,10 +107,10 @@ generate_messages(
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
+#generate_dynamic_reconfigure_options(
+#   cfg/Camera.cfg
 #   cfg/DynReconf2.cfg
-# )
+#)
 
 ###################################
 ## catkin specific configuration ##
@@ -123,6 +125,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES robo_gui
   CATKIN_DEPENDS message_runtime roscpp rospy sensor_msgs std_msgs cv_bridge tracker
+#                dynamic_reconfigure
 #  DEPENDS system_lib
 )
 
@@ -132,7 +135,6 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../common ${CMAKE_BINARY_DIR}/common)
 include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
@@ -160,7 +162,7 @@ add_executable(robo_gui_node ${SOURCES} ${RESOURCES})
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(robo_gui_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(robo_gui_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(robo_gui_node

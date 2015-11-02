@@ -1,7 +1,5 @@
 #include "settings_model.h"
 
-#include "trackers.h"
-
 #include <QDebug>
 
 using domain::SettingsModel;

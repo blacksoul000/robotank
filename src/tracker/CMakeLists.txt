@@ -17,13 +17,12 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 #find_package(Qt5Core)
-find_package(OpenCV)
+find_package(OpenCV 3)
 
 set(LIBS
 #    Qt5::Core
     ${OpenCV_LIBS}
 )
-
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -58,6 +57,7 @@ set(LIBS
 add_message_files(
   FILES
   Rect.msg
+  TrackerSelector.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -126,7 +126,6 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/RecurseDirs.cmake)
 HEADER_DIRECTORIES(DIRS)
 include_directories(${DIRS})
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../common ${CMAKE_BINARY_DIR}/common)
 include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}

@@ -1,10 +1,9 @@
 import QtQuick 2.0
+import QtMultimedia 5.0
 import QtQuick.Controls 1.4
 
 Item {
     id: root
-    anchors.fill: parent
-    anchors.topMargin: 20
 
     property color textColor: "white"
     property int h1: 32
@@ -18,6 +17,7 @@ Item {
         font.pixelSize: root.h1
     }
 
+    property QtObject framePresenter: factory.framePresenter()
     property QtObject presenter: factory.settingsPresenter()
 
     ListModel {
@@ -90,12 +90,14 @@ Item {
         }
 
         Slider {
-            minimumValue: 1
             maximumValue: 100
             width: 300
             stepSize: 1
             value: presenter.quality
             updateValueWhileDragging: false
+            onValueChanged: presenter.setQuality(value)
+
+            Component.onCompleted: minimumValue = 1; // set value from presenter first
         }
         Repeater {
             model: trackers.count * 2
@@ -103,7 +105,12 @@ Item {
         }
     }
 
-    Component.onCompleted: {
-        presenter.loadSettings()
+    VideoOutput {
+        id: video
+        anchors.horizontalCenter: parent.horizontalCenter;
+        anchors.bottom: parent.bottom
+        width: 320
+        height: 240
+        source: framePresenter;
     }
 }

@@ -2,32 +2,18 @@
 
 #include "robo_model.h"
 #include "settings_model.h"
-#include "trackers.h"
 
-#include <QSettings>
 #include <QRect>
 #include <QDebug>
 
 using presentation::SettingsPresenter;
 
-namespace
-{
-    const QString settingsFileName = "robotank.cfg";
-    const QString qualityId = "quality";
-    const int defaultQuality = 15;
-
-    const QString trackerId = "tracker";
-    const int defaultTracker = int(robotank::TrackerCode::CamShift);
-}
-
 class SettingsPresenter::Impl
 {
 public:
     domain::RoboModel* model = nullptr;
-    qreal quality = -1;
+    int quality = -1;
     int trackerCode = -1;
-
-    QSettings* settings = nullptr;
 };
 
 SettingsPresenter::SettingsPresenter(domain::RoboModel *model, QObject *parent) :
@@ -35,19 +21,21 @@ SettingsPresenter::SettingsPresenter(domain::RoboModel *model, QObject *parent) 
     d(new Impl)
 {
     d->model = model;
+    d->quality = d->model->settings()->quality();
+    d->trackerCode = d->model->settings()->tracker();
 
-
-
+    connect(d->model->settings(), &domain::SettingsModel::qualityChanged,
+            this, &SettingsPresenter::onModelQualityChanged);
+    connect(d->model->settings(), &domain::SettingsModel::trackerChanged,
+            this, &SettingsPresenter::onModelTrackerChanged);
 }
 
 SettingsPresenter::~SettingsPresenter()
 {
-    d->settings->sync();
-    delete d->settings;
     delete d;
 }
 
-qreal SettingsPresenter::quality() const
+int SettingsPresenter::quality() const
 {
     return d->quality;
 }
@@ -57,29 +45,30 @@ int SettingsPresenter::trackerCode() const
     return d->trackerCode;
 }
 
-void SettingsPresenter::setQuality(qreal quality)
+void SettingsPresenter::setQuality(int quality)
 {
-    if (qFuzzyCompare(d->quality, quality)) return;
+    if (d->quality == quality) return;
     d->quality = quality;
     d->model->settings()->setQuality(quality);
-    if (d->settings) d->settings->setValue(::qualityId, quality);
 }
 
-void SettingsPresenter::setTrackerCode(int code)
+void SettingsPresenter::setTrackerCode(int tracker)
 {
-    if (d->trackerCode == code) return;
-    d->trackerCode = code;
-    d->model->settings()->setTracker(code);
-    if (d->settings) d->settings->setValue(::trackerId, code);
+    if (d->trackerCode == tracker) return;
+    d->trackerCode = tracker;
+    d->model->settings()->setTracker(tracker);
 }
 
-void SettingsPresenter::loadSettings()
+void SettingsPresenter::onModelQualityChanged(int quality)
 {
-    if (d->settings) return;
-    d->settings = new QSettings(::settingsFileName, QSettings::NativeFormat);
+    if (d->quality == quality) return;
+    d->quality = quality;
+    emit qualityChanged(quality);
+}
 
-    this->setQuality(d->settings->value(::qualityId, ::defaultQuality).toInt());
-    this->setTrackerCode(d->trackerCode = d->settings->value(::trackerId, ::defaultTracker).toInt());
-    emit qualityChanged(d->quality);
-    emit trackerCodeChanged(d->trackerCode);
+void SettingsPresenter::onModelTrackerChanged(int tracker)
+{
+    if (d->trackerCode == tracker) return;
+    d->trackerCode = tracker;
+    emit trackerCodeChanged(tracker);
 }

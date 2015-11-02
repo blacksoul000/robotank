@@ -17,6 +17,8 @@ namespace robo
         MainWindow(ros::NodeHandle* nh, QObject* parent = nullptr);
         ~MainWindow();
 
+        void loadSettings();
+
     private:
         void connectStatusModel();
         void connectTrackModel();
@@ -24,7 +26,7 @@ namespace robo
 
     private slots:
         void onTrackRequest(const QRectF& rect);
-        void onChangeVideoQuality(int percent);
+        void onChangeVideoQuality(int quality);
         void onChangeTracker(int tracker);
 
     private:

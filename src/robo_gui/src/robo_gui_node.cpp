@@ -13,6 +13,7 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
 
     robo::MainWindow robo(&nh);
+    robo.loadSettings();
     ros::AsyncSpinner spinner(1); // Use 1 thread
     spinner.start();
     bool res = app.exec();
