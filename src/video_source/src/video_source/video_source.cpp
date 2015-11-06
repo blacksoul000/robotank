@@ -44,7 +44,8 @@ VideoSource::~VideoSource()
 
 bool VideoSource::start(int cameraNumber)
 {
-    d->capturer.open(cameraNumber); //camera number
+//    d->capturer.open(cameraNumber); //camera number
+    d->capturer.open("/home/blacksoul/workspace/2.mp4"); //camera number
     if(!d->capturer.isOpened())
     {
         qWarning() << "Failed to open camera";

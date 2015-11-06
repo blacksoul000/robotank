@@ -149,6 +149,7 @@ void MainWindow::onChangeVideoQuality(int quality)
     params << "dynamic_reconfigure"
             << "dynparam"
             << "set"
+            << "-t 1"
             << "/camera/image/compressed"
             << QString("'jpeg_quality': %1 ").arg(quality);
 
