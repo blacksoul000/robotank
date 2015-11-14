@@ -4,7 +4,10 @@
 #include <QFile>
 #include <QDebug>
 
-#include <linux/joystick.h>
+#ifndef ANDROID
+    #include <linux/joystick.h>
+#endif //ANDROID
+
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -50,6 +53,7 @@ void JoystickController::stop()
 
 void JoystickController::onReadyRead()
 {
+#ifndef ANDROID
     struct js_event event;
     while (read(d->fd, &event, sizeof(event)) == sizeof(event))
     {
@@ -70,4 +74,5 @@ void JoystickController::onReadyRead()
             break;
         }
     }
+#endif //ANDROID
 }
