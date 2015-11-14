@@ -3,7 +3,6 @@
 #include "robo_model.h"
 #include "track_model.h"
 
-#include <QRect>
 #include <QDebug>
 
 using presentation::TrackPresenter;

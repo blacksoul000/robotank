@@ -7,7 +7,7 @@
 
 //MIL
 //BOOSTING
-//+    MEDIANFLOW
+//MEDIANFLOW
 //TLD
 
 using va::TrackerKeypoints;

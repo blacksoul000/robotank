@@ -1,20 +1,20 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(robo_gui)
 
+add_subdirectory (android)
+
 add_definitions(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-#  OpenCV
   cv_bridge
   roscpp
   sensor_msgs
   std_msgs
   image_transport
   message_generation
-#  dynamic_reconfigure
 )
 
 ## System dependencies are found with CMake's conventions
@@ -135,10 +135,6 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include)
-include_directories(
-  ${catkin_INCLUDE_DIRS}
-)
 
 ## Declare a C++ library
 # add_library(robo_gui
@@ -151,10 +147,11 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/RecurseDirs.cmake)
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
 # add_dependencies(robo_gui ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-file(GLOB_RECURSE SOURCES src *.h *.cpp)
-HEADER_DIRECTORIES(DIRS)
+file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
+HEADER_DIRECTORIES(src DIRS)
 
 qt5_add_resources(RESOURCES src/qml.qrc src/resources.qrc)
+include_directories(${catkin_INCLUDE_DIRS})
 
 include_directories(${DIRS})
 ## Declare a C++ executable

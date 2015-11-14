@@ -2,6 +2,7 @@
 #define TRACK_PRESENTER_H
 
 #include <QObject>
+#include <QRectF>
 
 namespace domain
 {

@@ -1,5 +1,5 @@
-MACRO(HEADER_DIRECTORIES return_list)
-    FILE(GLOB_RECURSE new_list *.h)
+MACRO(HEADER_DIRECTORIES src return_list)
+    FILE(GLOB_RECURSE new_list ${src}/*.h)
     SET(dir_list "")
     FOREACH(file_path ${new_list})
         GET_FILENAME_COMPONENT(dir_path ${file_path} PATH)
