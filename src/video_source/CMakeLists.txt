@@ -19,16 +19,6 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
-find_package(Qt5Core)
-find_package(OpenCV)
-
-set(CMAKE_AUTOMOC ON)
-
-set(LIBS
-    Qt5::Core
-    ${OpenCV_LIBS}
-)
-
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
@@ -154,7 +144,6 @@ add_executable(video_source_node ${SOURCES})
 ## Specify libraries to link a library or executable target against
  target_link_libraries(video_source_node
    ${catkin_LIBRARIES}
-   ${LIBS}
  )
 
 #############
