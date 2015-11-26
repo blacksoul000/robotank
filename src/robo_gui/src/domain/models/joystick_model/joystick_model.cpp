@@ -1,16 +1,17 @@
 #include "joystick_model.h"
-#include "joystick_controller.h"
+#include "android_joystick_controller.h"
+#include "linux_joystick_controller.h"
 
 #include <QThread>
 #include <QDebug>
 
 using domain::JoystickModel;
-using domain::JoystickController;
+using domain::AbstractJoystickController;
 
 class JoystickModel::Impl
 {
 public:
-    JoystickController* controller = nullptr;
+    AbstractJoystickController* controller = nullptr;
     QThread worker;
 };
 
@@ -18,15 +19,21 @@ JoystickModel::JoystickModel(QObject* parent) :
     QObject(parent),
     d(new Impl)
 {
-    d->controller = new JoystickController("/dev/input/js0");
+    //TODO - factory
+#ifndef ANDROID
+    d->controller = new LinuxJoystickController("/dev/input/js0");
+#else
+    d->controller = new AndroidJoystickController();
+#endif
+
     d->controller->moveToThread(&d->worker);
 
-    connect(&d->worker, &QThread::started, d->controller, &JoystickController::start);
-    connect(d->controller, &JoystickController::finished, &d->worker, &QThread::quit);
+    connect(&d->worker, &QThread::started, d->controller, &AbstractJoystickController::start);
+    connect(d->controller, &AbstractJoystickController::finished, &d->worker, &QThread::quit);
 
-    connect(d->controller, &JoystickController::buttonPressed,
+    connect(d->controller, &AbstractJoystickController::buttonPressed,
             this, &JoystickModel::onButtonPressed);
-    connect(d->controller, &JoystickController::buttonReleased,
+    connect(d->controller, &AbstractJoystickController::buttonReleased,
             this, &JoystickModel::onButtonReleased);
 
     d->worker.start();

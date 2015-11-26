@@ -1,19 +1,16 @@
-#include "joystick_controller.h"
+#include "linux_joystick_controller.h"
 
 #include <QSocketNotifier>
 #include <QFile>
 #include <QDebug>
 
-#ifndef ANDROID
-    #include <linux/joystick.h>
-#endif //ANDROID
-
+#include <linux/joystick.h>
 #include <fcntl.h>
 #include <unistd.h>
 
-using domain::JoystickController;
+using domain::LinuxJoystickController;
 
-class JoystickController::Impl
+class LinuxJoystickController::Impl
 {
 public:
     QString device;
@@ -21,39 +18,37 @@ public:
     QSocketNotifier* notifier = nullptr;
 };
 
-JoystickController::JoystickController(const QString& device, QObject* parent) :
-    QObject(parent),
+LinuxJoystickController::LinuxJoystickController(const QString& device, QObject* parent) :
+    AbstractJoystickController(parent),
     d(new Impl)
 {
     d->device = device;
 }
 
-JoystickController::~JoystickController()
+LinuxJoystickController::~LinuxJoystickController()
 {
     delete d->notifier;
     delete d;
 }
 
-void JoystickController::start()
+void LinuxJoystickController::start()
 {
     if (d->fd > -1) return;
     d->fd = open(d->device.toUtf8().data(), O_RDONLY | O_NONBLOCK);
     if (d->fd < 0) return;
     d->notifier = new QSocketNotifier(d->fd, QSocketNotifier::Read, this);
 
-    connect(d->notifier, &QSocketNotifier::activated, this, &JoystickController::onReadyRead);
-    qDebug() << Q_FUNC_INFO;
+    connect(d->notifier, &QSocketNotifier::activated, this, &LinuxJoystickController::onReadyRead);
 }
 
-void JoystickController::stop()
+void LinuxJoystickController::stop()
 {
     close(d->fd);
     emit finished();
 }
 
-void JoystickController::onReadyRead()
+void LinuxJoystickController::onReadyRead()
 {
-#ifndef ANDROID
     struct js_event event;
     while (read(d->fd, &event, sizeof(event)) == sizeof(event))
     {
@@ -74,5 +69,4 @@ void JoystickController::onReadyRead()
             break;
         }
     }
-#endif //ANDROID
 }

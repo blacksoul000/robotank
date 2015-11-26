@@ -16,13 +16,6 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-#find_package(Qt5Core)
-find_package(OpenCV 3)
-
-set(LIBS
-#    Qt5::Core
-    ${OpenCV_LIBS}
-)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed

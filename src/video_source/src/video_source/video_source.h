@@ -1,8 +1,6 @@
 #ifndef VIDEOSOURCE_H
 #define VIDEOSOURCE_H
 
-#include <QObject>
-
 namespace ros
 {
     class NodeHandle;
@@ -10,17 +8,16 @@ namespace ros
 
 namespace video
 {
-    class VideoSource : public QObject
+    class VideoSource
     {
-        Q_OBJECT
     public:
-        VideoSource(ros::NodeHandle* nh, int fps, QObject* parent = nullptr);
+        VideoSource(ros::NodeHandle* nh, int fps);
         ~VideoSource();
 
-        bool start(int cameraNumber);
+        void start(int cameraNumber);
         void stop();
-
-    private slots:
+        
+    private:
         void capture();
 
     private:

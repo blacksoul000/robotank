@@ -1,39 +1,29 @@
 #include "video_source.h"
 
-
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <cv_bridge/cv_bridge.h>
 
-#include <QTimer>
-#include <QDebug>
-
 using video::VideoSource;
-
-namespace
-{
-    const int msInSec = 1000;
-}
 
 class VideoSource::Impl
 {
 public:
-    Impl(ros::NodeHandle* nh) : it(*nh) {}
+    Impl(ros::NodeHandle* nh) : nh(nh), it(*nh) {}
+    ros::NodeHandle* nh = nullptr;
     image_transport::ImageTransport it;
     image_transport::Publisher publisher = it.advertise("camera/image", 1);
 
     cv::VideoCapture capturer;
-    QTimer* timer = nullptr;
+    int fps = 1;
+    volatile bool stop = false;
 };
 
-VideoSource::VideoSource(ros::NodeHandle* nh, int fps, QObject* parent) :
-    QObject(parent),
+VideoSource::VideoSource(ros::NodeHandle* nh, int fps) :
     d(new Impl(nh))
 {
-    d->timer = new QTimer(this);
-    d->timer->setInterval(::msInSec / fps);
-    connect(d->timer, &QTimer::timeout, this, &VideoSource::capture);
+    d->fps = fps;
 }
 
 VideoSource::~VideoSource()
@@ -42,33 +32,37 @@ VideoSource::~VideoSource()
     delete d;
 }
 
-bool VideoSource::start(int cameraNumber)
+void VideoSource::start(int cameraNumber)
 {
-//    d->capturer.open(cameraNumber); //camera number
-    d->capturer.open("/home/blacksoul/workspace/2.mp4"); //camera number
+//    d->capturer.open("/home/user/photos/rae2015/MOV_0002.mp4"); //camera number
+    d->capturer.open(cameraNumber); //camera number
     if(!d->capturer.isOpened())
     {
-        qWarning() << "Failed to open camera";
-        return false;
+        ROS_WARN("Failed to open camera");
+        return;
     }
-    d->timer->start();
-    return true;
+    this->capture();
 }
 
 void VideoSource::stop()
 {
-    d->timer->stop();
+    d->stop = true;
 }
 
 void VideoSource::capture()
 {
-    cv::Mat frame;
-    d->capturer >> frame;
-    if(frame.empty()) return;
-
+    ros::Rate loop_rate(d->fps);
     sensor_msgs::ImagePtr msg;
+    while (d->nh->ok() && !d->stop)
+    {
+        cv::Mat frame;
+        d->capturer >> frame;
+        if(frame.empty()) continue;
 
-    msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", frame).toImageMsg();
-    d->publisher.publish(msg);
-    ros::spinOnce();
+        msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", frame).toImageMsg();
+        d->publisher.publish(msg);
+        ros::spinOnce();
+        cv::waitKey(1);
+        loop_rate.sleep();
+    }
 }

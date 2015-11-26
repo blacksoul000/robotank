@@ -23,7 +23,6 @@ find_package(Qt5Core)
 find_package(Qt5Gui)
 find_package(Qt5Quick)
 find_package(Qt5Multimedia)
-find_package(OpenCV)
 
 set(CMAKE_AUTOMOC ON)
 
@@ -32,7 +31,6 @@ set(LIBS
     Qt5::Gui
     Qt5::Quick
     Qt5::Multimedia
-    ${OpenCV_LIBS}
 )
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -147,7 +145,11 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/RecurseDirs.cmake)
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
 # add_dependencies(robo_gui ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+file(GLOB_RECURSE AndroidFiles ${CMAKE_CURRENT_SOURCE_DIR}/src/*android*.*)
+
 file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
+list(REMOVE_ITEM SOURCES ${AndroidFiles})
 HEADER_DIRECTORIES(src DIRS)
 
 qt5_add_resources(RESOURCES src/qml.qrc src/resources.qrc)

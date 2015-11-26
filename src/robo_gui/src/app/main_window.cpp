@@ -44,23 +44,23 @@ namespace
 class MainWindow::Impl
 {
 public:
-    Impl(ros::NodeHandle* nh) : nh(nh), it(*nh)
+    Impl(ros::NodeHandle* nh)// : nh(nh), it(*nh)
     {
-        nh->setParam("/robo_gui/image_transport", "compressed");
-        trackSelectorPub = nh->advertise< tracker::TrackerSelector >("tracker/selector", 1);
-        trackPub = nh->advertise< tracker::Rect >("tracker/toggle", 1);
-        trackSub = nh->subscribe("tracker/target", 1,
-                   &MainWindow::Impl::onNewTarget, this);
-        imageSub = it.subscribe("camera/image", 1,
-                   boost::bind(&MainWindow::Impl::onNewFrame, this, _1));
+//        nh->setParam("/robo_gui/image_transport", "compressed");
+//        trackSelectorPub = nh->advertise< tracker::TrackerSelector >("tracker/selector", 1);
+//        trackPub = nh->advertise< tracker::Rect >("tracker/toggle", 1);
+//        trackSub = nh->subscribe("tracker/target", 1,
+//                   &MainWindow::Impl::onNewTarget, this);
+//        imageSub = it.subscribe("camera/image", 1,
+//                   boost::bind(&MainWindow::Impl::onNewFrame, this, _1));
     }
-    ros::NodeHandle* nh;
-    image_transport::ImageTransport it;
+//    ros::NodeHandle* nh;
+//    image_transport::ImageTransport it;
 
-    ros::Publisher trackPub;
-    ros::Publisher trackSelectorPub;
-    ros::Subscriber trackSub;
-    image_transport::Subscriber imageSub;
+//    ros::Publisher trackPub;
+//    ros::Publisher trackSelectorPub;
+//    ros::Subscriber trackSub;
+//    image_transport::Subscriber imageSub;
 
     domain::RoboModel* robo = nullptr;
     QQuickView* viewer = nullptr;
@@ -134,13 +134,13 @@ void MainWindow::connectSettingsModel()
 
 void MainWindow::onTrackRequest(const QRectF& rect)
 {
-    qDebug() << Q_FUNC_INFO << rect;
-    tracker::RectPtr r(new tracker::Rect);
-    r->x = rect.x();
-    r->y = rect.y();
-    r->width = rect.width();
-    r->height = rect.height();
-    d->trackPub.publish(r);
+//    qDebug() << Q_FUNC_INFO << rect;
+//    tracker::RectPtr r(new tracker::Rect);
+//    r->x = rect.x();
+//    r->y = rect.y();
+//    r->width = rect.width();
+//    r->height = rect.height();
+//    d->trackPub.publish(r);
 }
 
 void MainWindow::onChangeVideoQuality(int quality)
@@ -159,11 +159,11 @@ void MainWindow::onChangeVideoQuality(int quality)
 
 void MainWindow::onChangeTracker(int tracker)
 {
-    tracker::TrackerSelectorPtr t(new tracker::TrackerSelector);
-    t->code = tracker;
-    d->trackSelectorPub.publish(t);
+//    tracker::TrackerSelectorPtr t(new tracker::TrackerSelector);
+//    t->code = tracker;
+//    d->trackSelectorPub.publish(t);
 
-    if (d->settings) d->settings->setValue(::trackerId, tracker);
+//    if (d->settings) d->settings->setValue(::trackerId, tracker);
 }
 
 void MainWindow::loadSettings()

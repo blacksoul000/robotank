@@ -35,9 +35,13 @@ set (LIBS
 include(${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/RecurseDirs.cmake)
 HEADER_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../src/ DIRS)
 
+file(GLOB_RECURSE LinuxFiles ${CMAKE_CURRENT_SOURCE_DIR}/../src/*linux*.*)
 file(GLOB_RECURSE HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/../src/*.h)
 file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/../src/*.cpp)
 file(GLOB_RECURSE RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/../src/*.qrc)
+
+list(REMOVE_ITEM SOURCES ${LinuxFiles})
+list(REMOVE_ITEM HEADERS ${LinuxFiles})
 
 string(REPLACE ";" " " ANDROID_DIRS "${DIRS}")
 string(REPLACE ";" " " ANDROID_SRCS "${SOURCES}")
