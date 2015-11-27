@@ -3,8 +3,7 @@ import QtQuick.Controls 1.4
 
 Item {
     visible: true
-    width: 800
-    height: 600
+    anchors.fill: parent
 
     Rectangle {
         color: "#212126"

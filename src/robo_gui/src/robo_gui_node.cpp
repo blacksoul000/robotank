@@ -9,15 +9,23 @@ int main(int argc, char** argv)
     QGuiApplication app(argc, argv);
     app.setApplicationName("Robotank");
 
-//    ros::init(argc, argv, "robo_gui");
-//    ros::NodeHandle nh;
+#ifdef ANDROID
+// Some magic for android run
+// FIXME - don't hardcode ips!
+    int c = 3;
+    char *v[] = {"robo_gui_droid" , "__master:=http://192.168.1.213:11311", "__ip:=192.168.1.80"};
 
-//    robo::MainWindow robo(&nh);
-    robo::MainWindow robo(nullptr);
-//    robo.loadSettings();
-//    ros::AsyncSpinner spinner(1); // Use 1 thread
-//    spinner.start();
+    ros::init(c, &v[0], "robo_gui_droid");
+#else
+    ros::init(argc, argv, "robo_gui");
+#endif
+    ros::NodeHandle nh;
+
+    robo::MainWindow robo(&nh);
+    robo.loadSettings();
+    ros::AsyncSpinner spinner(1); // Use 1 thread
+    spinner.start();
     bool res = app.exec();
-//    spinner.stop();
+    spinner.stop();
     return res;
 }

@@ -1,9 +1,20 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(robo_gui)
 
-add_subdirectory (android)
-
 add_definitions(-std=c++11)
+
+if(ANDROID)
+    set (ANDROID_NDK /home/blacksoul/workspace/android/android-ndk-r10e)
+    set (QT_ANDROID_SDK_ROOT /home/blacksoul/workspace/android/android-sdk-linux)
+    set (ENV{JAVA_HOME} /usr/lib/jvm/java-7-openjdk-amd64)
+    set (QT_ANDROID_ANT /usr/bin/ant)
+    set (PYTHON_EXECUTABLE /usr/bin/python)
+    set (ANDROID_COMPILER_VERSION 4.9)
+    set (Qt5Core_DIR /opt/Qt/5.5/android_armv7/lib/cmake/Qt5Core)
+    set (Qt5Gui_DIR /opt/Qt/5.5/android_armv7/lib/cmake/Qt5Gui)
+    set (Qt5Quick_DIR /opt/Qt/5.5/android_armv7/lib/cmake/Qt5Quick)
+    set (Qt5Multimedia_DIR /opt/Qt/5.5/android_armv7/lib/cmake/Qt5Multimedia)
+endif()
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -15,6 +26,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   image_transport
   message_generation
+  rospack
 )
 
 ## System dependencies are found with CMake's conventions
@@ -31,7 +43,12 @@ set(LIBS
     Qt5::Gui
     Qt5::Quick
     Qt5::Multimedia
+    z
 )
+
+if (ANDROID)
+    set (LIBS ${LIBS} log)
+endif()
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -146,28 +163,48 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/RecurseDirs.cmake)
 ## either from message generation or dynamic reconfigure
 # add_dependencies(robo_gui ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-file(GLOB_RECURSE AndroidFiles ${CMAKE_CURRENT_SOURCE_DIR}/src/*android*.*)
+if(ANDROID)
+    file(GLOB_RECURSE ExcludeFiles ${CMAKE_CURRENT_SOURCE_DIR}/src/*linux*.*)
+else(ANDROID)
+    file(GLOB_RECURSE ExcludeFiles ${CMAKE_CURRENT_SOURCE_DIR}/src/*android*.*)
+endif()
 
 file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
-list(REMOVE_ITEM SOURCES ${AndroidFiles})
+list(REMOVE_ITEM SOURCES ${ExcludeFiles})
 HEADER_DIRECTORIES(src DIRS)
 
 qt5_add_resources(RESOURCES src/qml.qrc src/resources.qrc)
 include_directories(${catkin_INCLUDE_DIRS})
+include_directories(~/workspace/robotank/devel/include) ##FIXME
 
 include_directories(${DIRS})
-## Declare a C++ executable
-add_executable(robo_gui_node ${SOURCES} ${RESOURCES})
 
+## Declare a C++ executable
+if(ANDROID)
+    add_library(${PROJECT_NAME} SHARED ${SOURCES} ${RESOURCES})
+else(ANDROID)
+    add_executable(${PROJECT_NAME} ${SOURCES} ${RESOURCES})
+endif()
+
+set_target_properties(${PROJECT_NAME} PROPERTIES VERSION 0.1)
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(robo_gui_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(robo_gui_node
+target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${LIBS}
 )
+
+if(ANDROID)
+
+    include(3rdparty/qt-android-cmake/AddQtAndroidApk.cmake)
+    add_qt_android_apk(${PROJECT_NAME}_apk.
+                        ${PROJECT_NAME}
+                        NAME "Robotank"
+                        PACKAGE_NAME "vitaliy.bondar.robotank")
+endif()
 
 #############
 ## Install ##
