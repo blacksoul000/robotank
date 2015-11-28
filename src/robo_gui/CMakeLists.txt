@@ -4,16 +4,23 @@ project(robo_gui)
 add_definitions(-std=c++11)
 
 if(ANDROID)
-    set (ANDROID_NDK /home/blacksoul/workspace/android/android-ndk-r10e)
-    set (QT_ANDROID_SDK_ROOT /home/blacksoul/workspace/android/android-sdk-linux)
     set (ENV{JAVA_HOME} /usr/lib/jvm/java-7-openjdk-amd64)
     set (QT_ANDROID_ANT /usr/bin/ant)
     set (PYTHON_EXECUTABLE /usr/bin/python)
     set (ANDROID_COMPILER_VERSION 4.9)
+
+    set (ANDROID_NDK /home/blacksoul/workspace/android/android-ndk-r10e)
+    set (QT_ANDROID_SDK_ROOT /home/blacksoul/workspace/android/android-sdk-linux)
     set (Qt5Core_DIR /opt/Qt/5.5/android_armv7/lib/cmake/Qt5Core)
     set (Qt5Gui_DIR /opt/Qt/5.5/android_armv7/lib/cmake/Qt5Gui)
     set (Qt5Quick_DIR /opt/Qt/5.5/android_armv7/lib/cmake/Qt5Quick)
     set (Qt5Multimedia_DIR /opt/Qt/5.5/android_armv7/lib/cmake/Qt5Multimedia)
+    # path to cross-compiled dependency of compressed_image_transport tiff, jpeg
+    LINK_DIRECTORIES(${LINK_DIRECTORIES} /opt/roscpp_output/libs/opencv-2.4.9/build/3rdparty/lib)
+
+#    find_package(catkin REQUIRED COMPONENTS
+#        compressed_image_transport
+#    )
 endif()
 
 ## Find catkin macros and libraries
@@ -25,6 +32,8 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   image_transport
+  compressed_image_transport
+  compressed_depth_image_transport
   message_generation
   rospack
 )
@@ -47,7 +56,7 @@ set(LIBS
 )
 
 if (ANDROID)
-    set (LIBS ${LIBS} log)
+    set (LIBS ${LIBS} log libjpeg libtiff libjasper libpng IlmImf)
 endif()
 
 ## Uncomment this if the package has a setup.py. This macro ensures

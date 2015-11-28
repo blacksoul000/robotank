@@ -14,8 +14,9 @@
 //ros
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
+#include <compressed_image_transport/compressed_subscriber.h>
+#include <sensor_msgs/CompressedImage.h>
 #include <cv_bridge/cv_bridge.h>
-#include <dynamic_reconfigure/server.h>
 
 // opencv
 #include <opencv2/highgui/highgui.hpp>
@@ -39,28 +40,41 @@ namespace
 
     const QString trackerId = "tracker";
     const int defaultTracker = 0;
+
+    const std::string transport = "compressed";
 }
 
 class MainWindow::Impl
 {
 public:
-    Impl(ros::NodeHandle* nh) : nh(nh), it(*nh)
+    Impl(ros::NodeHandle* nh) : nh(nh)//, it(*nh)
     {
-        nh->setParam("/robo_gui/image_transport", "compressed");
         trackSelectorPub = nh->advertise< tracker::TrackerSelector >("tracker/selector", 1);
         trackPub = nh->advertise< tracker::Rect >("tracker/toggle", 1);
         trackSub = nh->subscribe("tracker/target", 1,
                    &MainWindow::Impl::onNewTarget, this);
+#ifdef ANDROID
+        imageSub.subscribe(*nh, "camera/image", 1, boost::bind(&MainWindow::Impl::onNewFrame, this, _1));
+#else
+        image_transport::ImageTransport it(*nh);
         imageSub = it.subscribe("camera/image", 1,
-                   boost::bind(&MainWindow::Impl::onNewFrame, this, _1));
+                   boost::bind(&MainWindow::Impl::onNewFrame, this, _1), ros::VoidPtr(), transport);
+#endif
     }
     ros::NodeHandle* nh;
-    image_transport::ImageTransport it;
 
     ros::Publisher trackPub;
     ros::Publisher trackSelectorPub;
     ros::Subscriber trackSub;
+#ifdef ANDROID
+//    image_transport's plugin system is not work because of the static ros libs
+//    so we need to hardcode using transport
+//    and I'm failed to compile hardcoded transport at desktop =(
+    compressed_image_transport::CompressedSubscriber imageSub;
+#else
+//    image_transport::ImageTransport it;
     image_transport::Subscriber imageSub;
+#endif
 
     domain::RoboModel* robo = nullptr;
     QQuickView* viewer = nullptr;
@@ -71,6 +85,25 @@ public:
     QImage mat2QImage(const cv::Mat& image) const;
 };
 
+void MainWindow::Impl::onNewFrame(const sensor_msgs::ImageConstPtr &msg)
+{
+    cv::Mat frame =  cv_bridge::toCvShare(msg, "rgb8")->image;
+    robo->sight()->setFrame(this->mat2QImage(frame));
+}
+
+void MainWindow::Impl::onNewTarget(const tracker::RectPtr& rect)
+{
+    QRect r(rect->x, rect->y, rect->width, rect->height);
+    robo->track()->setTargetRect(r);
+}
+
+QImage MainWindow::Impl::mat2QImage(const cv::Mat& image) const
+{
+    QImage res(image.data, image.cols, image.rows, image.step, QImage::Format_RGB888);
+    return res.convertToFormat(QImage::Format_RGB32);
+}
+
+//-----------------------------------------------------------------------
 MainWindow::MainWindow(ros::NodeHandle* nh, QObject* parent) :
     QObject(parent),
     d(new Impl(nh))
@@ -96,24 +129,6 @@ MainWindow::~MainWindow()
     delete d->viewer;
     delete d->robo;
     delete d;
-}
-
-void MainWindow::Impl::onNewFrame(const sensor_msgs::ImageConstPtr &msg)
-{
-    cv::Mat frame =  cv_bridge::toCvShare(msg, "rgb8")->image;
-    robo->sight()->setFrame(this->mat2QImage(frame));
-}
-
-void MainWindow::Impl::onNewTarget(const tracker::RectPtr& rect)
-{
-    QRect r(rect->x, rect->y, rect->width, rect->height);
-    robo->track()->setTargetRect(r);
-}
-
-QImage MainWindow::Impl::mat2QImage(const cv::Mat& image) const
-{
-    QImage res(image.data, image.cols, image.rows, image.step, QImage::Format_RGB888);
-    return res.convertToFormat(QImage::Format_RGB32);
 }
 
 void MainWindow::connectStatusModel()
@@ -145,16 +160,16 @@ void MainWindow::onTrackRequest(const QRectF& rect)
 
 void MainWindow::onChangeVideoQuality(int quality)
 {
-    QStringList params;
-    params << "dynamic_reconfigure"
-            << "dynparam"
-            << "set"
-            << "-t 1"
-            << "/camera/image/compressed"
-            << QString("'jpeg_quality': %1 ").arg(quality);
+//    QStringList params;
+//    params << "dynamic_reconfigure"
+//            << "dynparam"
+//            << "set"
+//            << "-t 1"
+//            << "/camera/image/compressed"
+//            << QString("'jpeg_quality': %1 ").arg(quality);
 
-    QProcess::execute("rosrun", params);
-    if (d->settings) d->settings->setValue(::qualityId, quality);
+//    QProcess::execute("rosrun", params);
+//    if (d->settings) d->settings->setValue(::qualityId, quality);
 }
 
 void MainWindow::onChangeTracker(int tracker)
