@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 2.8.3)
 project(video_source)
 
 add_definitions(-std=c++11)
+SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} /usr/local/lib/cmake/)
+
+if (PICAM STREQUAL "ON")
+    add_definitions(-DPICAM)
+endif()
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -18,6 +23,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+find_package(raspicam REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -135,16 +141,21 @@ include_directories(
 file(GLOB_RECURSE SOURCES src *.cpp)
 
 ## Declare a C++ executable
-add_executable(video_source_node ${SOURCES})
+add_executable(${PROJECT_NAME} ${SOURCES})
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(video_source_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(video_source_node
+ target_link_libraries(${PROJECT_NAME}
    ${catkin_LIBRARIES}
  )
+
+if (PICAM STREQUAL "ON")
+    target_link_libraries(${PROJECT_NAME} ${raspicam_CV_LIBS})
+endif()
+
 
 #############
 ## Install ##
