@@ -6,6 +6,7 @@ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} /usr/local/lib/cmake/)
 
 if (PICAM STREQUAL "ON")
     add_definitions(-DPICAM)
+    find_package(raspicam REQUIRED)
 endif()
 
 ## Find catkin macros and libraries
@@ -23,7 +24,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-find_package(raspicam REQUIRED)
+
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed

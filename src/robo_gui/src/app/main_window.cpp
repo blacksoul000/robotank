@@ -17,6 +17,7 @@
 #include <compressed_image_transport/compressed_subscriber.h>
 #include <sensor_msgs/CompressedImage.h>
 #include <cv_bridge/cv_bridge.h>
+#include "std_msgs/UInt8.h"
 
 // opencv
 #include <opencv2/highgui/highgui.hpp>
@@ -49,6 +50,7 @@ class MainWindow::Impl
 public:
     Impl(ros::NodeHandle* nh) : nh(nh)//, it(*nh)
     {
+        imageQualityPub = nh->advertise< std_msgs::UInt8 >("camera/image/quality", 0);
         trackSelectorPub = nh->advertise< tracker::TrackerSelector >("tracker/selector", 1);
         trackPub = nh->advertise< tracker::Rect >("tracker/toggle", 1);
         trackSub = nh->subscribe("tracker/target", 1,
@@ -65,6 +67,7 @@ public:
 
     ros::Publisher trackPub;
     ros::Publisher trackSelectorPub;
+    ros::Publisher imageQualityPub;
     ros::Subscriber trackSub;
 #ifdef ANDROID
 //    image_transport's plugin system is not work because of the static ros libs
@@ -160,16 +163,11 @@ void MainWindow::onTrackRequest(const QRectF& rect)
 
 void MainWindow::onChangeVideoQuality(int quality)
 {
-//    QStringList params;
-//    params << "dynamic_reconfigure"
-//            << "dynparam"
-//            << "set"
-//            << "-t 1"
-//            << "/camera/image/compressed"
-//            << QString("'jpeg_quality': %1 ").arg(quality);
-
-//    QProcess::execute("rosrun", params);
-//    if (d->settings) d->settings->setValue(::qualityId, quality);
+    std_msgs::UInt8 msg;
+    msg.data = quality;
+    d->imageQualityPub.publish(msg);
+    if (d->settings) d->settings->setValue(::qualityId, quality);
+    ros::param::set("camera/image/quality", quality);
 }
 
 void MainWindow::onChangeTracker(int tracker)

@@ -4,6 +4,7 @@
 #include <image_transport/image_transport.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <cv_bridge/cv_bridge.h>
+#include "std_msgs/UInt8.h"
 
 #ifdef PICAM
 #include <raspicam/raspicam_cv.h>
@@ -11,10 +12,19 @@
 
 using video::VideoSource;
 
+namespace
+{
+    const int defaultQuality = 15;
+} //namespace
+
 class VideoSource::Impl
 {
 public:
-    Impl(ros::NodeHandle* nh) : nh(nh), it(*nh) {}
+    Impl(ros::NodeHandle* nh) : nh(nh), it(*nh)
+    {
+        imageQualitySub = nh->subscribe("camera/image/quality", 0,
+                    &VideoSource::Impl::onQualityChangeRequest, this);
+    }
     ros::NodeHandle* nh = nullptr;
     image_transport::ImageTransport it;
     image_transport::Publisher publisher = it.advertise("camera/image", 1);
@@ -26,8 +36,28 @@ public:
 #endif
     int fps = 0;
     volatile bool stop = false;
+    ros::Subscriber imageQualitySub;
+
+    void onQualityChangeRequest(const std_msgs::UInt8& msg);
+    void onQualityChangeRequestImpl(int quality);
 };
 
+void VideoSource::Impl::onQualityChangeRequest(const std_msgs::UInt8& msg)
+{
+    this->onQualityChangeRequestImpl(msg.data);
+}
+
+void VideoSource::Impl::onQualityChangeRequestImpl(int quality)
+{
+//    rosrun dynamic_reconfigure dynparam set -t1 /camera/image/compressed jpeg_quality 15
+    std::string s = "rosrun dynamic_reconfigure dynparam set -t1 "
+                    "/camera/image/compressed jpeg_quality "
+            + std::to_string(quality);
+    popen(s.c_str(), "r");
+    // system(s.c_str()); does not work by unknown reason
+}
+
+//----------------------------------------------------------------------------
 VideoSource::VideoSource(ros::NodeHandle* nh, int fps) :
     d(new Impl(nh))
 {
@@ -48,13 +78,16 @@ void VideoSource::start(int cameraNumber)
 
     if(!d->capturer.open())
 #else
-//    d->capturer.open("/home/user/photos/rae2015/MOV_0002.mp4");
+//    if(!d->capturer.open("/media/storage/downloads/Mstiteli.2012.x264.BDRip.(AVC)-ExKinoRay.mkv"))
     if(!d->capturer.open(cameraNumber))
 #endif
     {
         ROS_WARN("Failed to open camera");
         return;
     }
+    int quality = 0;
+    ros::param::param< int >("camera/image/quality", quality, ::defaultQuality);
+    d->onQualityChangeRequestImpl(quality);
     this->capture();
 }
 
@@ -81,7 +114,6 @@ void VideoSource::capture()
         msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", frame).toImageMsg();
         d->publisher.publish(msg);
         ros::spinOnce();
-        cv::waitKey(1);
         loop_rate.sleep();
     }
 }
