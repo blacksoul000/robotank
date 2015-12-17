@@ -1,6 +1,8 @@
 #ifndef MAIN_WINDOW_H
 #define MAIN_WINDOW_H
 
+#include <image_transport/image_transport.h>
+
 #include <QObject>
 
 namespace ros
@@ -19,6 +21,9 @@ namespace robo
 
         void loadSettings();
 
+    signals:
+        void frameReceived();
+
     private:
         void connectStatusModel();
         void connectTrackModel();
@@ -28,6 +33,10 @@ namespace robo
         void onTrackRequest(const QRectF& rect);
         void onChangeVideoQuality(int quality);
         void onChangeTracker(int tracker);
+        void onImageTimeout();
+
+        void onNewFrame(const sensor_msgs::ImageConstPtr& msg);
+        void onFrameReceived();
 
     private:
         class Impl;

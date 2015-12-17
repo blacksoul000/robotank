@@ -16,6 +16,7 @@ if(ANDROID)
     set (Qt5Quick_DIR /opt/Qt/5.5/android_armv7/lib/cmake/Qt5Quick)
     set (Qt5Svg_DIR /opt/Qt/5.5/android_armv7/lib/cmake/Qt5Svg)
     set (Qt5Multimedia_DIR /opt/Qt/5.5/android_armv7/lib/cmake/Qt5Multimedia)
+    set (Qt5AndroidExtras_DIR /opt/Qt/5.5/android_armv7/lib/cmake/Qt5AndroidExtras)
     # path to cross-compiled dependency of compressed_image_transport tiff, jpeg
     LINK_DIRECTORIES(${LINK_DIRECTORIES} /opt/roscpp_output/libs/opencv-2.4.9/build/3rdparty/lib)
 endif()
@@ -55,7 +56,8 @@ set(LIBS
 )
 
 if (ANDROID)
-    set (LIBS ${LIBS} log libjpeg libtiff libjasper libpng IlmImf)
+    find_package(Qt5AndroidExtras)
+    set (LIBS ${LIBS} Qt5::AndroidExtras log libjpeg libtiff libjasper libpng IlmImf)
 endif()
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -207,18 +209,13 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 if(ANDROID)
-#    set(ANDROID_RESOURCES PACKAGE_SOURCES
-#        ${CMAKE_CURRENT_SOURCE_DIR}/src/resources
-#        ${CMAKE_CURRENT_SOURCE_DIR}/android
-#    )
-#    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/resources DESTINATION share/subsurface/data)
     set (QT_ANDROID_APP_NAME ${PROJECT_NAME})
     include(3rdparty/qt-android-cmake/AddQtAndroidApk.cmake)
     add_qt_android_apk(${PROJECT_NAME}_apk.
                         ${PROJECT_NAME}
                         NAME "Robotank"
                         PACKAGE_NAME "vitaliy.bondar.robotank"
-#                        PACKAGE_SOURCES ${ANDROID_RESOURCES}
+                        PACKAGE_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/android
 )
 endif()
 

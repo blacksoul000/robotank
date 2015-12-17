@@ -13,7 +13,6 @@
 
 //ros
 #include <ros/ros.h>
-#include <image_transport/image_transport.h>
 #include <compressed_image_transport/compressed_subscriber.h>
 #include <sensor_msgs/CompressedImage.h>
 #include <cv_bridge/cv_bridge.h>
@@ -28,8 +27,13 @@
 #include <QQuickView>
 #include <QQmlEngine>
 #include <QSettings>
-#include <QProcess>
+#include <QTimer>
 #include <QDebug>
+
+#ifdef ANDROID
+#include <QtAndroid>
+#include <QAndroidJniObject>
+#endif
 
 using robo::MainWindow;
 
@@ -43,25 +47,19 @@ namespace
     const int defaultTracker = 0;
 
     const std::string transport = "compressed";
+    const int imageTimeout = 1000; //ms
 }
 
 class MainWindow::Impl
 {
 public:
-    Impl(ros::NodeHandle* nh) : nh(nh)//, it(*nh)
+    Impl(ros::NodeHandle* nh) : nh(nh)
     {
         imageQualityPub = nh->advertise< std_msgs::UInt8 >("camera/image/quality", 0);
         trackSelectorPub = nh->advertise< tracker::TrackerSelector >("tracker/selector", 1);
         trackPub = nh->advertise< tracker::Rect >("tracker/toggle", 1);
         trackSub = nh->subscribe("tracker/target", 1,
                    &MainWindow::Impl::onNewTarget, this);
-#ifdef ANDROID
-        imageSub.subscribe(*nh, "camera/image", 1, boost::bind(&MainWindow::Impl::onNewFrame, this, _1));
-#else
-        image_transport::ImageTransport it(*nh);
-        imageSub = it.subscribe("camera/image", 1,
-                   boost::bind(&MainWindow::Impl::onNewFrame, this, _1), ros::VoidPtr(), transport);
-#endif
     }
     ros::NodeHandle* nh;
 
@@ -70,29 +68,24 @@ public:
     ros::Publisher imageQualityPub;
     ros::Subscriber trackSub;
 #ifdef ANDROID
+    QAndroidJniObject wakeLock;
+    bool wakeLocked = false;
 //    image_transport's plugin system is not work because of the static ros libs
 //    so we need to hardcode using transport
 //    and I'm failed to compile hardcoded transport at desktop =(
     compressed_image_transport::CompressedSubscriber imageSub;
 #else
-//    image_transport::ImageTransport it;
     image_transport::Subscriber imageSub;
 #endif
 
     domain::RoboModel* robo = nullptr;
     QQuickView* viewer = nullptr;
     QSettings* settings = nullptr;
+    QTimer imageTimer;
 
-    void onNewFrame(const sensor_msgs::ImageConstPtr& msg);
     void onNewTarget(const tracker::RectPtr &rect);
     QImage mat2QImage(const cv::Mat& image) const;
 };
-
-void MainWindow::Impl::onNewFrame(const sensor_msgs::ImageConstPtr &msg)
-{
-    cv::Mat frame =  cv_bridge::toCvShare(msg, "rgb8")->image;
-    robo->sight()->setFrame(this->mat2QImage(frame));
-}
 
 void MainWindow::Impl::onNewTarget(const tracker::RectPtr& rect)
 {
@@ -118,15 +111,44 @@ MainWindow::MainWindow(ros::NodeHandle* nh, QObject* parent) :
     d->viewer->setSource(QUrl("qrc:/qml/Main.qml"));
     d->viewer->showFullScreen();
 
+    d->imageTimer.setInterval(::imageTimeout);
+    connect(&d->imageTimer, &QTimer::timeout, this, &MainWindow::onImageTimeout);
+
+#ifdef ANDROID
+    d->imageSub.subscribe(*d->nh, "camera/image", 1, boost::bind(&MainWindow::onNewFrame, this, _1));
+#else
+    image_transport::ImageTransport it(*d->nh);
+    d->imageSub = it.subscribe("camera/image", 1,
+                   boost::bind(&MainWindow::onNewFrame, this, _1), ros::VoidPtr(), transport);
+#endif
+
     this->connectStatusModel();
     this->connectTrackModel();
     this->connectSettingsModel();
 
     connect(d->viewer->engine(), &QQmlEngine::quit, qApp, &QCoreApplication::quit);
+    connect(this, &MainWindow::frameReceived, this, &MainWindow::onFrameReceived);
+
+#ifdef ANDROID
+    QAndroidJniObject activity = QtAndroid::androidActivity();
+
+    QAndroidJniObject serviceName = QAndroidJniObject::getStaticObjectField<jstring>(
+                "android/content/Context","POWER_SERVICE");
+    QAndroidJniObject powerMgr = activity.callObjectMethod("getSystemService",
+                                            "(Ljava/lang/String;)Ljava/lang/Object;",
+                                            serviceName.object<jobject>());
+    QAndroidJniObject tag = QAndroidJniObject::fromString("Robotank");
+    d->wakeLock = powerMgr.callObjectMethod("newWakeLock",
+                                        "(ILjava/lang/String;)Landroid/os/PowerManager$WakeLock;",
+                                        10, //SCREEN_BRIGHT_WAKE_LOCK
+                                        tag.object<jstring>());
+#endif
+
 }
 
 MainWindow::~MainWindow()
 {
+    d->imageTimer.stop();
     d->settings->sync();
     delete d->settings;
     delete d->viewer;
@@ -186,4 +208,39 @@ void MainWindow::loadSettings()
 
     d->robo->settings()->setQuality(d->settings->value(::qualityId, ::defaultQuality).toInt());
     d->robo->settings()->setTracker(d->settings->value(::trackerId, ::defaultTracker).toInt());
+}
+
+void MainWindow::onImageTimeout()
+{
+    d->imageTimer.stop();
+    d->robo->sight()->setFrame(QImage());
+
+#ifdef ANDROID
+    if (d->wakeLocked)
+    {
+        d->wakeLocked = false;
+        d->wakeLock.callMethod<void>("release", "()V");
+    }
+#endif
+}
+
+void MainWindow::onNewFrame(const sensor_msgs::ImageConstPtr& msg)
+{
+    cv::Mat frame =  cv_bridge::toCvShare(msg, "rgb8")->image;
+    d->robo->sight()->setFrame(d->mat2QImage(frame));
+
+    emit frameReceived();
+}
+
+void MainWindow::onFrameReceived()
+{
+    d->imageTimer.start();
+
+#ifdef ANDROID
+    if (!d->wakeLocked)
+    {
+        d->wakeLocked = true;
+        d->wakeLock.callMethod<void>("acquire", "()V");
+    }
+#endif
 }
