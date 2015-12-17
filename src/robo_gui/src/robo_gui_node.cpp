@@ -3,6 +3,8 @@
 #include <ros/ros.h>
 
 #include <QGuiApplication>
+#include <QNetworkInterface>
+#include <QHostAddress>
 
 int main(int argc, char** argv)
 {
@@ -12,8 +14,17 @@ int main(int argc, char** argv)
 #ifdef ANDROID
 // Some magic for android run
 // FIXME - don't hardcode ips!
+
+    QHostAddress selfIp;
+    foreach (const auto& address, QNetworkInterface::allAddresses())
+    {
+        if (address.protocol() == QAbstractSocket::IPv4Protocol
+                && address != QHostAddress::LocalHost)
+             selfIp = address;
+    }
+    std::string ip = "__ip:=" + selfIp.toString().toStdString();
     int c = 3;
-    char *v[] = {"robo_gui_droid" , "__master:=http://192.168.1.213:11311", "__ip:=192.168.1.80"};
+    char *v[] = {"robo_gui_droid" , "__master:=http://192.168.1.213:11311", &ip[0]};
 
     ros::init(c, &v[0], "robo_gui_droid");
 #else
