@@ -15,7 +15,7 @@ Item {
         anchors.fill: parent
         // Implements back key navigation
         focus: true
-        initialItem: Qt.resolvedUrl("qrc:///qml/Combat.qml")
+        initialItem: Qt.resolvedUrl("qrc:/qml/Combat.qml")
         Keys.onReleased: {
             if (event.key === Qt.Key_Back || event.key === Qt.Key_Escape) {
                 if (stackView.depth > 1) {

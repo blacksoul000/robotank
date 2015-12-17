@@ -46,9 +46,9 @@ Item {
         anchors.top: parent.top
         anchors.margins: 5
 
-        iconSource: "qrc:///icons/settings.svg"
+        iconSource: "qrc:/icons/settings.svg"
         onClicked: {
-            stackView.push(Qt.resolvedUrl("qrc:///qml/Settings.qml"))
+            stackView.push(Qt.resolvedUrl("qrc:/qml/Settings.qml"))
         }
     }
 }

@@ -14,13 +14,10 @@ if(ANDROID)
     set (Qt5Core_DIR /opt/Qt/5.5/android_armv7/lib/cmake/Qt5Core)
     set (Qt5Gui_DIR /opt/Qt/5.5/android_armv7/lib/cmake/Qt5Gui)
     set (Qt5Quick_DIR /opt/Qt/5.5/android_armv7/lib/cmake/Qt5Quick)
+    set (Qt5Svg_DIR /opt/Qt/5.5/android_armv7/lib/cmake/Qt5Svg)
     set (Qt5Multimedia_DIR /opt/Qt/5.5/android_armv7/lib/cmake/Qt5Multimedia)
     # path to cross-compiled dependency of compressed_image_transport tiff, jpeg
     LINK_DIRECTORIES(${LINK_DIRECTORIES} /opt/roscpp_output/libs/opencv-2.4.9/build/3rdparty/lib)
-
-#    find_package(catkin REQUIRED COMPONENTS
-#        compressed_image_transport
-#    )
 endif()
 
 ## Find catkin macros and libraries
@@ -44,6 +41,7 @@ find_package(Qt5Core)
 find_package(Qt5Gui)
 find_package(Qt5Quick)
 find_package(Qt5Multimedia)
+find_package(Qt5Svg)
 
 set(CMAKE_AUTOMOC ON)
 
@@ -52,6 +50,7 @@ set(LIBS
     Qt5::Gui
     Qt5::Quick
     Qt5::Multimedia
+    Qt5::Svg
     z
 )
 
@@ -182,20 +181,21 @@ file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 list(REMOVE_ITEM SOURCES ${ExcludeFiles})
 HEADER_DIRECTORIES(src DIRS)
 
-qt5_add_resources(RESOURCES src/qml.qrc src/resources.qrc)
+qt5_add_resources(RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/qml.qrc
+                            ${CMAKE_CURRENT_SOURCE_DIR}/src/resources.qrc)
 include_directories(${catkin_INCLUDE_DIRS})
-include_directories(~/workspace/robotank/devel/include) ##FIXME
+include_directories(${CATKIN_DEVEL_PREFIX}/include)
 
 include_directories(${DIRS})
 
 ## Declare a C++ executable
 if(ANDROID)
     add_library(${PROJECT_NAME} SHARED ${SOURCES} ${RESOURCES})
+    set_target_properties(${PROJECT_NAME} PROPERTIES VERSION 0.1)
 else(ANDROID)
     add_executable(${PROJECT_NAME} ${SOURCES} ${RESOURCES})
 endif()
 
-set_target_properties(${PROJECT_NAME} PROPERTIES VERSION 0.1)
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -207,12 +207,19 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 if(ANDROID)
-
+#    set(ANDROID_RESOURCES PACKAGE_SOURCES
+#        ${CMAKE_CURRENT_SOURCE_DIR}/src/resources
+#        ${CMAKE_CURRENT_SOURCE_DIR}/android
+#    )
+#    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/resources DESTINATION share/subsurface/data)
+    set (QT_ANDROID_APP_NAME ${PROJECT_NAME})
     include(3rdparty/qt-android-cmake/AddQtAndroidApk.cmake)
     add_qt_android_apk(${PROJECT_NAME}_apk.
                         ${PROJECT_NAME}
                         NAME "Robotank"
-                        PACKAGE_NAME "vitaliy.bondar.robotank")
+                        PACKAGE_NAME "vitaliy.bondar.robotank"
+#                        PACKAGE_SOURCES ${ANDROID_RESOURCES}
+)
 endif()
 
 #############
