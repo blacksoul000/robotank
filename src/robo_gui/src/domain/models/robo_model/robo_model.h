@@ -18,14 +18,12 @@ namespace domain
 //        StatusModel* status() const;
         TrackModel* track() const;
         SettingsModel* settings() const;
-        JoystickModel* joystick() const;
 
     private:
         SightModel* m_sight = nullptr;
         StatusModel* m_status = nullptr;
         TrackModel* m_track = nullptr;
         SettingsModel* m_settings = nullptr;
-        JoystickModel* m_joystick = nullptr;
     };
 }
 

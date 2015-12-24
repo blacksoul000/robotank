@@ -78,8 +78,8 @@ void VideoSource::start(int cameraNumber)
 
     if(!d->capturer.open())
 #else
-//    if(!d->capturer.open("/media/storage/downloads/Mstiteli.2012.x264.BDRip.(AVC)-ExKinoRay.mkv"))
-    if(!d->capturer.open(cameraNumber))
+    if(!d->capturer.open("/media/storage/downloads/Mstiteli.2012.x264.BDRip.(AVC)-ExKinoRay.mkv"))
+//    if(!d->capturer.open(cameraNumber))
 #endif
     {
         ROS_WARN("Failed to open camera");

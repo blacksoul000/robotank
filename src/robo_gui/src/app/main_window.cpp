@@ -110,6 +110,7 @@ MainWindow::MainWindow(ros::NodeHandle* nh, QObject* parent) :
                         new presentation::PresenterFactory(d->robo, this));
     d->viewer->setSource(QUrl("qrc:/qml/Main.qml"));
     d->viewer->showFullScreen();
+    d->viewer->requestActivate();
 
     d->imageTimer.setInterval(::imageTimeout);
     connect(&d->imageTimer, &QTimer::timeout, this, &MainWindow::onImageTimeout);
@@ -140,7 +141,7 @@ MainWindow::MainWindow(ros::NodeHandle* nh, QObject* parent) :
     QAndroidJniObject tag = QAndroidJniObject::fromString("Robotank");
     d->wakeLock = powerMgr.callObjectMethod("newWakeLock",
                                         "(ILjava/lang/String;)Landroid/os/PowerManager$WakeLock;",
-                                        10, //SCREEN_BRIGHT_WAKE_LOCK
+                                        6, //SCREEN_DIM_WAKE_LOCK
                                         tag.object<jstring>());
 #endif
 
