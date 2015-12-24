@@ -1,8 +1,10 @@
 #include "gamepad_controller.h"
 
+//msgs
+#include "gamepad_controller/JsEvent.h"
+
 //ros
 #include <ros/ros.h>
-//#include "std_msgs/UInt8.h"
 
 //linux
 #include <linux/joystick.h>
@@ -10,6 +12,7 @@
 #include <unistd.h>
 
 using gamepad::GamepadController;
+using gamepad_controller::JsEvent;
 
 class GamepadController::Impl
 {
@@ -17,6 +20,7 @@ public:
     std::string device;
     int fd = -1;
     bool isOpened = false;
+    ros::Publisher pub;
 
     bool open()
     {
@@ -30,6 +34,7 @@ GamepadController::GamepadController(ros::NodeHandle* nh, const std::string& pat
     d(new Impl)
 {
     d->device = path;
+    d->pub = nh->advertise< JsEvent >("gamepad/event", 100);
 }
 
 GamepadController::~GamepadController()
@@ -43,23 +48,10 @@ void GamepadController::process()
     if (!d->isOpened) d->open();
 
     struct js_event event;
+    JsEvent jsEvent;
     while (read(d->fd, &event, sizeof(event)) == sizeof(event))
     {
-        switch (event.type) {
-        case JS_EVENT_AXIS:
-            break;
-        case JS_EVENT_BUTTON:
-            if (event.value)
-            {
-                ROS_WARN("pressed %d", event.number);
-            }
-            else
-            {
-                ROS_WARN("released %d", event.number);
-            }
-            break;
-        default:
-            break;
-        }
+        memcpy(&jsEvent, &event + sizeof(event.time), sizeof(JsEvent));
+        d->pub.publish(jsEvent);
     }
 }
