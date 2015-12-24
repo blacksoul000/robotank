@@ -5,7 +5,7 @@
 namespace
 {
     const std::string path = "/dev/input/js0";
-    const int fps = 25;
+    const int fps = 100;
 }
 
 int main(int argc, char** argv)

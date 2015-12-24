@@ -34,7 +34,7 @@ GamepadController::GamepadController(ros::NodeHandle* nh, const std::string& pat
     d(new Impl)
 {
     d->device = path;
-    d->pub = nh->advertise< JsEvent >("gamepad/event", 100);
+    d->pub = nh->advertise< JsEvent >("gamepad/event", 1000);
 }
 
 GamepadController::~GamepadController()
