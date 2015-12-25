@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file alias="icons/settings.svg">resources/settings.svg</file>
+        <file alias="icons/ok.svg">resources/ok.svg</file>
+        <file alias="icons/cancel.svg">resources/cancel.svg</file>
     </qresource>
 </RCC>

@@ -6,8 +6,17 @@ Item {
     anchors.fill: parent
 
     Rectangle {
-        color: "#212126"
+        color: roboPalette.backgroudColor
         anchors.fill: parent
+    }
+
+    Item {
+        id: roboPalette
+
+        property color backgroudColor: "#212126"
+        property color textColor: "white"
+        property int captionTextSize: 32
+        property int textSize: 24
     }
 
     StackView {

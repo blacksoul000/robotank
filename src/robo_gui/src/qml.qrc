@@ -5,5 +5,6 @@
         <file>qml/Target.qml</file>
         <file>qml/SelectArea.qml</file>
         <file>qml/Settings.qml</file>
+        <file>qml/RButton.qml</file>
     </qresource>
 </RCC>

@@ -1,23 +1,17 @@
 import QtQuick 2.0
-import QtMultimedia 5.0
 import QtQuick.Controls 1.4
 
 Item {
     id: root
 
-    property color textColor: "white"
-    property int h1: 32
-    property int h2: 16
-
     Text {
         id: label
         anchors.horizontalCenter: parent.horizontalCenter
         text: "Settings"
-        color: root.textColor
-        font.pixelSize: root.h1
+        color: roboPalette.textColor
+        font.pixelSize: roboPalette.captionTextSize
     }
 
-    property QtObject framePresenter: factory.framePresenter()
     property QtObject presenter: factory.settingsPresenter()
 
     ListModel {
@@ -57,20 +51,29 @@ Item {
             Text {
                 id: label
                 visible: !even
-                color: root.textColor
-                font.pixelSize: root.h2
+                color: roboPalette.textColor
+                font.pixelSize: roboPalette.textSize
+                anchors.verticalCenter: parent.verticalCenter
                 text: item.text
             }
-            Button {
+            RButton {
                 id: button
                 visible: even
-                text: "Select"
-                width: 100
+                imageSource: checked ? "qrc:/icons/ok.svg" : "qrc:/icons/cancel.svg"
                 checkable: true
-                checked: (item.code === presenter.trackerCode)
                 exclusiveGroup: selectedTracker
+
                 onClicked: {
                     presenter.trackerCode = item.code
+                }
+
+                Component.onCompleted: {
+                    presenter.trackerCodeChanged.connect(onPresenterTracerCodeChanged)
+                    onPresenterTracerCodeChanged(presenter.trackerCode)
+                }
+
+                function onPresenterTracerCodeChanged(trackerCode) {
+                    if (trackerCode === item.code) selectedTracker.current = button
                 }
             }
         }
@@ -84,18 +87,20 @@ Item {
         columns: 2
         spacing: 10
         Text {
-            color: root.textColor
-            font.pixelSize: root.h2
+            id: txt
+            color: roboPalette.textColor
+            font.pixelSize: roboPalette.textSize
             text: "Video quality"
         }
 
         Slider {
             maximumValue: 100
-            width: 300
+            width: 200
+            height: txt.height
             stepSize: 1
             value: presenter.quality
             updateValueWhileDragging: false
-            onValueChanged: presenter.setQuality(value)
+            onValueChanged: presenter.quality = value
 
             Component.onCompleted: minimumValue = 1; // set value from presenter first
         }
@@ -103,14 +108,5 @@ Item {
             model: trackers.count * 2
             delegate: trackerDelegate
         }
-    }
-
-    VideoOutput {
-        id: video
-        anchors.horizontalCenter: parent.horizontalCenter;
-        anchors.bottom: parent.bottom
-        width: 320
-        height: 240
-        source: framePresenter;
     }
 }

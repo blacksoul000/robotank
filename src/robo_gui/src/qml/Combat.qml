@@ -41,14 +41,56 @@ Item {
         }
     }
 
-    ToolButton {
+    Loader {
+        property int hidden: parent.x + parent.width
+        property int showed: parent.x + 2 * parent.width / 3
+        property bool isLoaded: false
+        property bool isHidden: true
+
+        id: settingsLoader
+        x: hidden
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        width: parent.width / 3
+
+        PropertyAnimation {
+            id: settingsShow
+            target: settingsLoader
+            property: "x"
+            to: settingsLoader.showed
+            duration: 200
+        }
+        PropertyAnimation {
+            id: settingsHide
+            target: settingsLoader
+            property: "x"
+            to: settingsLoader.hidden
+            duration: 200
+        }
+    }
+
+    RButton {
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.margins: 5
 
-        iconSource: "qrc:/icons/settings.svg"
+        imageSource: "qrc:/icons/settings.svg"
         onClicked: {
-            stackView.push(Qt.resolvedUrl("qrc:/qml/Settings.qml"))
+            if (!settingsLoader.isLoaded)
+            {
+                settingsLoader.isLoaded = true
+                settingsLoader.source = "qrc:/qml/Settings.qml"
+            }
+            if (settingsLoader.isHidden)
+            {
+                settingsLoader.isHidden = false
+                settingsShow.start()
+            }
+            else
+            {
+                settingsLoader.isHidden = true
+                settingsHide.start()
+            }
         }
     }
 }
