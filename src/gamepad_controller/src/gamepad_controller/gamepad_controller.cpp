@@ -20,7 +20,11 @@ public:
     std::string device;
     int fd = -1;
     bool isOpened = false;
-    ros::Publisher pub;
+    ros::Publisher analog1P;
+    ros::Publisher analog2P;
+    ros::Publisher digitalP;
+    ros::Publisher buttonsP;
+    ros::Publisher triggersP;
 
     bool open()
     {
@@ -34,7 +38,12 @@ GamepadController::GamepadController(ros::NodeHandle* nh, const std::string& pat
     d(new Impl)
 {
     d->device = path;
-    d->pub = nh->advertise< JsEvent >("gamepad/event", 1000);
+//    d->statusP = nh->advertise< JsEvent >("gamepad/status", 1000);
+    d->analog1P = nh->advertise< JsEvent >("gamepad/analog1", 50);
+    d->analog2P = nh->advertise< JsEvent >("gamepad/analog2", 50);
+    d->digitalP = nh->advertise< JsEvent >("gamepad/digatal", 10);
+    d->buttonsP = nh->advertise< JsEvent >("gamepad/buttons", 20);
+    d->triggersP = nh->advertise< JsEvent >("gamepad/triggers", 50);
 }
 
 GamepadController::~GamepadController()
@@ -52,6 +61,28 @@ void GamepadController::process()
     while (read(d->fd, &event, sizeof(event)) == sizeof(event))
     {
         memcpy(&jsEvent, &event + sizeof(event.time), sizeof(JsEvent));
-        d->pub.publish(jsEvent);
+        switch (event.type)
+        {
+        case JS_EVENT_BUTTON:
+            d->buttonsP.publish(jsEvent);
+            return;
+        case JS_EVENT_AXIS:
+            if (jsEvent.number == 0 || jsEvent.number == 1)
+            {
+                d->analog1P.publish(jsEvent);
+            } else if (jsEvent.number == 2 || jsEvent.number == 5)
+            {
+                d->analog2P.publish(jsEvent);
+            } else if (jsEvent.number == 6 || jsEvent.number == 7)
+            {
+                d->digitalP.publish(jsEvent);
+            } else if (jsEvent.number == 3 || jsEvent.number == 4)
+            {
+                d->triggersP.publish(jsEvent);
+            }
+            return;
+        default:
+            return;
+        }
     }
 }
