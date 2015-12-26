@@ -16,28 +16,40 @@ Item {
         source: framePresenter;
     }
 
-    Target {
-        id: target
+    Crosshair {
+        anchors.centerIn: parent
+        visible: !target.valid
+        width: 150
+        height: 150
+    }
+
+    CaptureArea {
+        id: capture
+        anchors.centerIn: parent
+        visible: !target.valid && framePresenter.hasFrame
+        presenter: trackPresenter
+
         Connections {
             target: trackPresenter
-            onTargetRectChanged: {
-                target.x = rect.x / page.scaleX
-                target.y = rect.y / page.scaleY
-                target.width = rect.width / page.scaleX
-                target.height = rect.height / page.scaleY
+            onCaptureSizeChanged: {
+                trackPresenter.setCaptureFrameRect(screenToImage(capture.r))
             }
         }
     }
 
+    Target {
+        id: target
+        x: trackPresenter.targetRect.x / page.scaleX
+        y: trackPresenter.targetRect.y / page.scaleY
+        width: trackPresenter.targetRect.width / page.scaleX
+        height: trackPresenter.targetRect.height / page.scaleY
+    }
+
     SelectArea {
         anchors.fill: parent
+        visible: framePresenter.hasFrame
         onAccepted: {
-            r.x = r.x * page.scaleX
-            r.y = r.y * page.scaleY
-            r.width = r.width * page.scaleX
-            r.height = r.height * page.scaleY
-
-            trackPresenter.onTrackRequest(r)
+            trackPresenter.onTrackRequest(screenToImage(r))
         }
     }
 
@@ -92,5 +104,13 @@ Item {
                 settingsHide.start()
             }
         }
+    }
+
+    function screenToImage(rect) {
+        rect.x *= page.scaleX
+        rect.y *= page.scaleY
+        rect.width *= page.scaleX
+        rect.height *= page.scaleY
+        return rect
     }
 }

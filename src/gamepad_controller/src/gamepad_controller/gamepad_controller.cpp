@@ -30,6 +30,10 @@ public:
     {
         fd = ::open(device.c_str(), O_RDONLY | O_NONBLOCK);
         isOpened = (fd >= 0);
+        if (!isOpened)
+        {
+            ROS_DEBUG_ONCE("Failed to open %s", device.c_str());
+        }
         return isOpened;
     }
 };
@@ -60,12 +64,12 @@ void GamepadController::process()
     JsEvent jsEvent;
     while (read(d->fd, &event, sizeof(event)) == sizeof(event))
     {
-        memcpy(&jsEvent, &event + sizeof(event.time), sizeof(JsEvent));
+        memcpy(&jsEvent, &event.value, sizeof(JsEvent));
         switch (event.type)
         {
         case JS_EVENT_BUTTON:
             d->buttonsP.publish(jsEvent);
-            return;
+            break;
         case JS_EVENT_AXIS:
             if (jsEvent.number == 0 || jsEvent.number == 1)
             {
@@ -73,16 +77,18 @@ void GamepadController::process()
             } else if (jsEvent.number == 2 || jsEvent.number == 5)
             {
                 d->analog2P.publish(jsEvent);
-            } else if (jsEvent.number == 6 || jsEvent.number == 7)
+//              via bt I get many "spam" events with numbers 6,7,8, so disabling
+//            } else if (jsEvent.number == 6 || jsEvent.number == 7) //usb connection
+            } else if (jsEvent.number == 9 || jsEvent.number == 10) //ds4drv(bluetooth) connection
             {
                 d->digitalP.publish(jsEvent);
             } else if (jsEvent.number == 3 || jsEvent.number == 4)
             {
                 d->triggersP.publish(jsEvent);
             }
-            return;
+            break;
         default:
-            return;
+            break;
         }
     }
 }

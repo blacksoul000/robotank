@@ -11,7 +11,6 @@ class TrackPresenter::Impl
 {
 public:
     domain::RoboModel* model = nullptr;
-    QRectF rect;
 };
 
 TrackPresenter::TrackPresenter(domain::RoboModel *model, QObject *parent) :
@@ -20,18 +19,14 @@ TrackPresenter::TrackPresenter(domain::RoboModel *model, QObject *parent) :
 {
     d->model = model;
     connect(model->track(), &domain::TrackModel::targetRectChanged,
-            this, &TrackPresenter::onTargetRectChanged);
+            this, &TrackPresenter::targetRectChanged);
+    connect(model->track(), &domain::TrackModel::captureSizeChanged,
+            this, &TrackPresenter::captureSizeChanged);
 }
 
 TrackPresenter::~TrackPresenter()
 {
     delete d;
-}
-
-void TrackPresenter::onTargetRectChanged(const QRectF& rect)
-{
-    d->rect = rect;
-    emit targetRectChanged(rect);
 }
 
 void TrackPresenter::onTrackRequest(const QRectF& rect)
@@ -41,5 +36,15 @@ void TrackPresenter::onTrackRequest(const QRectF& rect)
 
 QRectF TrackPresenter::targetRect() const
 {
-    return d->rect;
+    return d->model->track()->targetRect();
+}
+
+QSize TrackPresenter::captureSize() const
+{
+    return d->model->track()->captureSize();
+}
+
+void TrackPresenter::setCaptureFrameRect(const QRectF& rect)
+{
+    d->model->track()->setCaptureRect(rect);
 }

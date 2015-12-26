@@ -1,11 +1,19 @@
 #include "track_model.h"
 
+#include <QVector>
+#include <QSize>
+#include <QDebug>
+
 using domain::TrackModel;
 
 class TrackModel::Impl
 {
 public:
     QRectF targetRect;
+    QRectF captureRect;
+    QVector< QSize > sizes = {QSize(32, 32), QSize(64, 64), QSize(128, 128), QSize(256, 256)};
+    int index = 0;
+    bool tracking = false;
 };
 
 TrackModel::TrackModel(QObject* parent) :
@@ -22,6 +30,7 @@ TrackModel::~TrackModel()
 void TrackModel::setTargetRect(const QRectF& rect)
 {
     if (rect == d->targetRect) return;
+    d->tracking = rect.isValid();
     d->targetRect = rect;
 
     emit targetRectChanged(rect);
@@ -30,4 +39,31 @@ void TrackModel::setTargetRect(const QRectF& rect)
 QRectF TrackModel::targetRect() const
 {
     return d->targetRect;
+}
+
+void TrackModel::nextCaptureSize()
+{
+    ++d->index;
+    if (d->index == d->sizes.length()) d->index = 0;
+    emit captureSizeChanged(this->captureSize());
+}
+
+QSize TrackModel::captureSize() const
+{
+    return d->sizes.at(d->index);
+}
+
+void TrackModel::setCaptureRect(const QRectF& rect)
+{
+    d->captureRect = rect;
+}
+
+QRectF TrackModel::captureRect() const
+{
+    return d->captureRect;
+}
+
+bool TrackModel::isTracking() const
+{
+    return d->tracking;
 }

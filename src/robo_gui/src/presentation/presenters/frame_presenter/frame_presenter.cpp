@@ -15,6 +15,7 @@ public:
     domain::RoboModel* model = nullptr;
     QAbstractVideoSurface* surface = nullptr;
     QVideoSurfaceFormat format;
+    bool hasFrame = false;
 };
 
 FramePresenter::FramePresenter(domain::RoboModel *model, QObject *parent) :
@@ -50,6 +51,11 @@ void FramePresenter::closeSurface()
 void FramePresenter::onFrameChanged(const QImage& frame)
 {
     if (!d->surface) return;
+    if (d->hasFrame != !frame.isNull())
+    {
+        d->hasFrame = !frame.isNull();
+        emit hasFrameChanged();
+    }
     if (frame.isNull()) return;
 
     QVideoFrame::PixelFormat pixelFormat =
@@ -77,4 +83,9 @@ void FramePresenter::onFrameChanged(const QImage& frame)
 //    d->surface->present(videoFrame);
 //    qDebug() << "6";
     d->surface->present(QVideoFrame(frame));
+}
+
+bool FramePresenter::hasFrame() const
+{
+    return d->surface && d->hasFrame;
 }

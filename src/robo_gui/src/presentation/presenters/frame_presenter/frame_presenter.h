@@ -18,12 +18,18 @@ namespace presentation
     public:
         Q_PROPERTY(QAbstractVideoSurface* videoSurface READ videoSurface
                    WRITE setVideoSurface)
+        Q_PROPERTY(bool hasFrame READ hasFrame NOTIFY hasFrameChanged)
 
         FramePresenter(domain::RoboModel* model, QObject* parent = nullptr);
         ~FramePresenter() override;
 
         QAbstractVideoSurface* videoSurface() const;
         void setVideoSurface(QAbstractVideoSurface* s);
+
+        bool hasFrame() const;
+
+    signals:
+        bool hasFrameChanged();
 
     private slots:
         void onFrameChanged(const QImage& frame);

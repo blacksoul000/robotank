@@ -16,8 +16,17 @@ namespace domain
         void setTargetRect(const QRectF& rect);
         QRectF targetRect() const;
 
+        void nextCaptureSize();
+        QSize captureSize() const;
+
+        void setCaptureRect(const QRectF& rect);
+        QRectF captureRect() const;
+
+        bool isTracking() const;
+
     signals:
         void targetRectChanged(const QRectF& rect);
+        void captureSizeChanged(const QSize& rect);
         void trackRequest(const QRectF& rect);
 
     private:

@@ -10,6 +10,7 @@
 //msgs
 #include "tracker/Rect.h"
 #include "tracker/TrackerSelector.h"
+#include "gamepad_controller/JsEvent.h"
 
 //ros
 #include <ros/ros.h>
@@ -60,6 +61,8 @@ public:
         trackPub = nh->advertise< tracker::Rect >("tracker/toggle", 1);
         trackSub = nh->subscribe("tracker/target", 1,
                    &MainWindow::Impl::onNewTarget, this);
+        gamepadButtonsSub = nh->subscribe("gamepad/buttons", 20,
+                                          &MainWindow::Impl::onButtonPressed, this);
     }
     ros::NodeHandle* nh;
 
@@ -67,6 +70,7 @@ public:
     ros::Publisher trackSelectorPub;
     ros::Publisher imageQualityPub;
     ros::Subscriber trackSub;
+    ros::Subscriber gamepadButtonsSub;
 #ifdef ANDROID
     QAndroidJniObject wakeLock;
     bool wakeLocked = false;
@@ -85,6 +89,8 @@ public:
 
     void onNewTarget(const tracker::RectPtr &rect);
     QImage mat2QImage(const cv::Mat& image) const;
+    void onTrackRequest(const QRectF& rect);
+    void onButtonPressed(const gamepad_controller::JsEvent& event);
 };
 
 void MainWindow::Impl::onNewTarget(const tracker::RectPtr& rect)
@@ -97,6 +103,37 @@ QImage MainWindow::Impl::mat2QImage(const cv::Mat& image) const
 {
     QImage res(image.data, image.cols, image.rows, image.step, QImage::Format_RGB888);
     return res.convertToFormat(QImage::Format_RGB32);
+}
+
+void MainWindow::Impl::onTrackRequest(const QRectF& rect)
+{
+    qDebug() << Q_FUNC_INFO << rect;
+    tracker::RectPtr r(new tracker::Rect);
+    r->x = rect.x();
+    r->y = rect.y();
+    r->width = rect.width();
+    r->height = rect.height();
+    trackPub.publish(r);
+}
+
+void MainWindow::Impl::onButtonPressed(const gamepad_controller::JsEvent& event)
+{
+//    ROS_WARN("type = %d, number = %d, value = %d", event.type, event.number, event.value);
+    switch (event.number)
+    {
+    case 0: //square
+        if (event.value == 0)
+        {
+            QRectF r = robo->track()->isTracking() ? QRectF() : robo->track()->captureRect();
+            this->onTrackRequest(r);
+        }
+        break;
+    case 3: //triangle
+        if (event.value == 0) robo->track()->nextCaptureSize();
+        break;
+    default:
+        break;
+    }
 }
 
 //-----------------------------------------------------------------------
@@ -173,17 +210,6 @@ void MainWindow::connectSettingsModel()
     connect(d->robo->settings(), &domain::SettingsModel::trackerChanged, this, &MainWindow::onChangeTracker);
 }
 
-void MainWindow::onTrackRequest(const QRectF& rect)
-{
-    qDebug() << Q_FUNC_INFO << rect;
-    tracker::RectPtr r(new tracker::Rect);
-    r->x = rect.x();
-    r->y = rect.y();
-    r->width = rect.width();
-    r->height = rect.height();
-    d->trackPub.publish(r);
-}
-
 void MainWindow::onChangeVideoQuality(int quality)
 {
     std_msgs::UInt8 msg;
@@ -191,6 +217,11 @@ void MainWindow::onChangeVideoQuality(int quality)
     d->imageQualityPub.publish(msg);
     if (d->settings) d->settings->setValue(::qualityId, quality);
     ros::param::set("camera/image/quality", quality);
+}
+
+void MainWindow::onTrackRequest(const QRectF& rect)
+{
+    d->onTrackRequest(rect);
 }
 
 void MainWindow::onChangeTracker(int tracker)

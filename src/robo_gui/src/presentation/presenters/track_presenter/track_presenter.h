@@ -17,20 +17,21 @@ namespace presentation
         Q_OBJECT
     public:
         Q_PROPERTY(QRectF targetRect READ targetRect NOTIFY targetRectChanged);
+        Q_PROPERTY(QSize captureSize READ captureSize NOTIFY captureSizeChanged);
 
         TrackPresenter(domain::RoboModel* model, QObject* parent = nullptr);
         ~TrackPresenter() override;
 
         QRectF targetRect() const;
+        QSize captureSize() const;
 
     public slots:
         void onTrackRequest(const QRectF& rect);
+        void setCaptureFrameRect(const QRectF& rect);
 
     signals:
         void targetRectChanged(const QRectF& rect);
-
-    private slots:
-        void onTargetRectChanged(const QRectF& rect);
+        void captureSizeChanged(const QSize& size);
 
     private:
         class Impl;

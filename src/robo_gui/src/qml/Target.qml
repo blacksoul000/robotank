@@ -1,6 +1,7 @@
 import QtQuick 2.0
 
 Item {
+    property bool valid: width > 0 && height > 0
     Rectangle {
         color: "transparent"
         border.color: "black"
