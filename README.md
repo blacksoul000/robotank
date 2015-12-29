@@ -1,5 +1,7 @@
 # robotank
 install opencv-3.0.0 with contrib modules
+https://github.com/Itseez/opencv_contrib
+
 rebuild cv_bridge and libcompressed_image_transport image_transport and compressed_depth_image_transport with opencv 3.0.0
 
 compile ros using manual
@@ -13,3 +15,6 @@ bluetoothctl -a
 [bluetooth]# scan on
 [bluetooth]# trust <MAC>
 [bluetooth]# pair <MAC>
+
+
+//TODO - add KCF tracker

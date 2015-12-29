@@ -15,6 +15,8 @@ using video::VideoSource;
 namespace
 {
     const int defaultQuality = 15;
+    const int width = 1024;
+    const int height = 768;
 } //namespace
 
 class VideoSource::Impl
@@ -73,12 +75,15 @@ VideoSource::~VideoSource()
 void VideoSource::start(int cameraNumber)
 {
 #ifdef PICAM
-    //set camera params
+    // set camera params
+    // 2592x1944 - native resolution
     d->capturer.set(CV_CAP_PROP_FORMAT, CV_8UC3);
+    raspiCamCvSetCapturePropertyHeight(&d->capturer, ::height); // width will set automatically
 
     if(!d->capturer.open())
 #else
-//    if(!d->capturer.open("/media/storage/downloads/Mstiteli.2012.x264.BDRip.(AVC)-ExKinoRay.mkv"))
+    d->capturer.set(CV_CAP_PROP_FRAME_WIDTH, ::width);
+    d->capturer.set(CV_CAP_PROP_FRAME_HEIGHT, ::height);
     if(!d->capturer.open(cameraNumber))
 #endif
     {
