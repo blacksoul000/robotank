@@ -10,7 +10,8 @@ namespace va
         MedianFlow,
         Boosting,
         Mil,
-        Tld
+        Tld,
+        CustomTld
     };
 }
 

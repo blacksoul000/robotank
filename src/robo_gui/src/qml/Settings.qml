@@ -36,6 +36,10 @@ Item {
             text: "Tld"
             code: 5
         }
+        ListElement {
+            text: "CustomTld"
+            code: 6
+        }
     }
 
     ExclusiveGroup { id: selectedTracker }

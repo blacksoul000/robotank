@@ -13,7 +13,15 @@
 #include <opencv2/highgui/highgui.hpp>
 #include "opencv2/video/tracking.hpp"
 
+#include <chrono>
+
 using va::TrackerNode;
+
+namespace
+{
+    const double width = 640;
+    const double height = 480;
+}  // namespace
 
 class TrackerNode::Impl
 {
@@ -34,9 +42,10 @@ public:
     ros::Subscriber selecterSub;
     ros::Publisher targetPub;
 
-    bool tracking = false;
     va::ITracker* tracker = nullptr;
     va::TrackerCode trackAlgo = va::TrackerCode::Unknown;
+    int imageWidth = 0;
+    int imageHeight = 0;
 
     void onNewFrame(const sensor_msgs::ImageConstPtr& msg);
     void onToggleRequest(const tracker::RectPtr &rect);
@@ -58,11 +67,25 @@ TrackerNode::~TrackerNode()
 
 void TrackerNode::Impl::onNewFrame(const sensor_msgs::ImageConstPtr &msg)
 {
-    if (!tracker || !tracker->isTracking()) return;
+    int64_t s = (std::chrono::duration_cast< std::chrono::microseconds >(
+                    std::chrono::system_clock::now().time_since_epoch()).count());
+
     cv::Mat frame = cv_bridge::toCvShare(msg, "bgr8")->image;
-    tracker->track(frame);
+    imageWidth = frame.cols;
+    imageHeight = frame.rows;
+    if (!tracker || !tracker->isTracking()) return;
+    cv::Mat scaled;
+    resize(frame, scaled, cv::Size(::width, ::height));
+    int64_t t = (std::chrono::duration_cast< std::chrono::microseconds >(
+                    std::chrono::system_clock::now().time_since_epoch()).count());
+
+    tracker->track(scaled);
 
     this->publishTarget(tracker->target());
+
+    int64_t e = (std::chrono::duration_cast< std::chrono::microseconds >(
+                    std::chrono::system_clock::now().time_since_epoch()).count());
+    ROS_WARN("Converted in: %ld, Updated in: %ld, Total: %ld (us)", (t - s), (e - t), (e - s));
 }
 
 void TrackerNode::Impl::onToggleRequest(const tracker::RectPtr& rect)
@@ -73,8 +96,12 @@ void TrackerNode::Impl::onToggleRequest(const tracker::RectPtr& rect)
 
     if (start)
     {
-        cv::Rect cvRect(rect->x, rect->y, rect->width, rect->height);
+        const double scaleX = ::width / imageWidth;
+        const double scaleY = ::height / imageHeight;
+        cv::Rect cvRect(rect->x * scaleX, rect->y * scaleY,
+                        rect->width * scaleX, rect->height * scaleY);
         tracker = va::TrackerFactory::makeTracker(trackAlgo);
+//        tracker = va::TrackerFactory::makeTracker(va::TrackerCode::CustomTld);
         tracker->start(cvRect);
     }
     else if(tracker)
@@ -94,10 +121,13 @@ void TrackerNode::Impl::onSwitchTrackerRequest(const tracker::TrackerSelectorPtr
 
 void TrackerNode::Impl::publishTarget(const cv::Rect& rect)
 {
+    const double scaleX = ::width / imageWidth;
+    const double scaleY = ::height / imageHeight;
+
     tracker::RectPtr r(new tracker::Rect);
-    r->x = rect.x;
-    r->y = rect.y;
-    r->width = rect.width;
-    r->height = rect.height;
+    r->x = rect.x / scaleX;
+    r->y = rect.y / scaleY;
+    r->width = rect.width / scaleX;
+    r->height = rect.height / scaleY;
     targetPub.publish(r);
 }
