@@ -21,6 +21,7 @@ namespace
 {
     const double width = 640;
     const double height = 480;
+    const int defaultTracker = 0;
 }  // namespace
 
 class TrackerNode::Impl
@@ -43,7 +44,7 @@ public:
     ros::Publisher targetPub;
 
     va::ITracker* tracker = nullptr;
-    va::TrackerCode trackAlgo = va::TrackerCode::Unknown;
+    va::TrackerCode trackAlgo = va::TrackerCode(::defaultTracker);
     int imageWidth = 0;
     int imageHeight = 0;
 
@@ -57,6 +58,9 @@ public:
 TrackerNode::TrackerNode(ros::NodeHandle* nh) :
     d(new Impl(nh))
 {
+    int code = 0;
+    ros::param::param< int >("tracker/code", code, ::defaultTracker);
+    d->trackAlgo = va::TrackerCode(code);
 }
 
 TrackerNode::~TrackerNode()

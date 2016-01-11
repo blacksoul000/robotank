@@ -215,8 +215,9 @@ void MainWindow::onChangeVideoQuality(int quality)
     std_msgs::UInt8 msg;
     msg.data = quality;
     d->imageQualityPub.publish(msg);
-    if (d->settings) d->settings->setValue(::qualityId, quality);
     ros::param::set("camera/image/quality", quality);
+
+    if (d->settings) d->settings->setValue(::qualityId, quality);
 }
 
 void MainWindow::onTrackRequest(const QRectF& rect)
@@ -229,6 +230,7 @@ void MainWindow::onChangeTracker(int tracker)
     tracker::TrackerSelectorPtr t(new tracker::TrackerSelector);
     t->code = tracker;
     d->trackSelectorPub.publish(t);
+    ros::param::set("tracker/code", tracker);
 
     if (d->settings) d->settings->setValue(::trackerId, tracker);
 }
