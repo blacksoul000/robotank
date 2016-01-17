@@ -16,7 +16,10 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-find_package(OpenCV REQUIRED COMPONENTS tracking)
+#find_package(OpenCV REQUIRED COMPONENTS tracking)
+set (OpenTLD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/OpenTLD/build)
+link_directories(${OpenTLD_DIR}/lib)
+find_package(OpenTLD)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -123,6 +126,8 @@ include_directories(${DIRS})
 include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${OPENTLD_INCLUDE_DIRS}
+  ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/OpenTLD/src/libopentld/tld/detector
 )
 
 ## Declare a C++ library
@@ -135,7 +140,7 @@ include_directories(
 ## either from message generation or dynamic reconfigure
 # add_dependencies(tracker ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-file(GLOB_RECURSE SOURCES src *.cpp)
+file(GLOB_RECURSE SOURCES src src/*.cpp)
 
 ## Declare a C++ executable
 add_executable(${PROJECT_NAME} ${SOURCES})
@@ -145,10 +150,12 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(${PROJECT_NAME}
+target_link_libraries(${PROJECT_NAME}
    ${catkin_LIBRARIES}
    ${OpenCV_LIBS}
- )
+   ${OpenTLD_DIR}/lib/libopentld.a
+   gomp
+)
 
 #############
 ## Install ##

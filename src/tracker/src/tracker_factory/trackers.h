@@ -11,7 +11,8 @@ namespace va
         Boosting,
         Mil,
         Tld,
-        CustomTld
+        CustomTld,
+        OpenTld
     };
 }
 

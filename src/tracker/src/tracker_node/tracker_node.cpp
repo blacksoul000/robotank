@@ -19,8 +19,8 @@ using va::TrackerNode;
 
 namespace
 {
-    const double width = 640;
-    const double height = 480;
+    const double width = 320;
+    const double height = 240;
     const int defaultTracker = 0;
 }  // namespace
 
@@ -47,6 +47,7 @@ public:
     va::TrackerCode trackAlgo = va::TrackerCode(::defaultTracker);
     int imageWidth = 0;
     int imageHeight = 0;
+    int64_t prevTime = 0;
 
     void onNewFrame(const sensor_msgs::ImageConstPtr& msg);
     void onToggleRequest(const tracker::RectPtr &rect);
@@ -80,16 +81,15 @@ void TrackerNode::Impl::onNewFrame(const sensor_msgs::ImageConstPtr &msg)
     if (!tracker || !tracker->isTracking()) return;
     cv::Mat scaled;
     resize(frame, scaled, cv::Size(::width, ::height));
-    int64_t t = (std::chrono::duration_cast< std::chrono::microseconds >(
-                    std::chrono::system_clock::now().time_since_epoch()).count());
-
     tracker->track(scaled);
 
     this->publishTarget(tracker->target());
 
     int64_t e = (std::chrono::duration_cast< std::chrono::microseconds >(
                     std::chrono::system_clock::now().time_since_epoch()).count());
-    ROS_WARN("Converted in: %ld, Updated in: %ld, Total: %ld (us)", (t - s), (e - t), (e - s));
+    double fps = 1000000.0 / (e - prevTime);
+    ROS_WARN("Fps: %f, Updated in: %ld, Real: %ld us", fps, (e - s), (e - prevTime));
+    prevTime = e;
 }
 
 void TrackerNode::Impl::onToggleRequest(const tracker::RectPtr& rect)
@@ -105,7 +105,6 @@ void TrackerNode::Impl::onToggleRequest(const tracker::RectPtr& rect)
         cv::Rect cvRect(rect->x * scaleX, rect->y * scaleY,
                         rect->width * scaleX, rect->height * scaleY);
         tracker = va::TrackerFactory::makeTracker(trackAlgo);
-//        tracker = va::TrackerFactory::makeTracker(va::TrackerCode::CustomTld);
         tracker->start(cvRect);
     }
     else if(tracker)
