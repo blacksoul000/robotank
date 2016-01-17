@@ -40,6 +40,10 @@ Item {
             text: "CustomTld"
             code: 6
         }
+        ListElement {
+            text: "OpenTld"
+            code: 7
+        }
     }
 
     ExclusiveGroup { id: selectedTracker }

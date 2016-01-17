@@ -1,6 +1,6 @@
 #include "tld_adapter.h"
 
-#include "TLD.h"
+#include "custom_tld.h"
 
 #include <iostream>
 
@@ -58,7 +58,7 @@ void TldAdapter::track(const cv::Mat& image)
 
     if (!d->inited)
     {
-        std::cout << "INIT!" << std::endl;
+        std::cout << "INIT" << std::endl;
         d->tracker = new TLD();
         if (!d->tracker->init(gray, d->target)) return;
 
