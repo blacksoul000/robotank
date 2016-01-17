@@ -15,8 +15,8 @@ using video::VideoSource;
 namespace
 {
     const int defaultQuality = 15;
-    const int width = 1024;
-    const int height = 768;
+    const int width = 640;
+    const int height = 480;
 } //namespace
 
 class VideoSource::Impl
@@ -78,7 +78,10 @@ void VideoSource::start(int cameraNumber)
     // set camera params
     // 2592x1944 - native resolution
     d->capturer.set(CV_CAP_PROP_FORMAT, CV_8UC3);
-    raspiCamCvSetCapturePropertyHeight(&d->capturer, ::height); // width will set automatically
+    d->capturer.set(CV_CAP_PROP_FRAME_HEIGHT, ::height);
+    d->capturer.set(CV_CAP_PROP_FRAME_WIDTH, ::width);
+    d->capturer.set(CV_CAP_PROP_BRIGHTNESS, 85);
+    d->capturer.set(CV_CAP_PROP_CONTRAST, 95);
 
     if(!d->capturer.open())
 #else
@@ -112,7 +115,8 @@ void VideoSource::capture()
         d->capturer.grab();
         d->capturer.retrieve(frame);
 #else
-        d->capturer >> frame;
+         d->capturer >> frame;
+//        frame = cv::imread("/home/blacksoul/workspace/robotank/1024x768.jpg", CV_LOAD_IMAGE_COLOR);
 #endif
         if(frame.empty()) continue;
 
