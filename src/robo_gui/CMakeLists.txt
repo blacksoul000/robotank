@@ -94,7 +94,6 @@ endif()
 add_message_files(
   FILES
   Rect.msg
-  TrackerSelector.msg
 )
 
 ## Generate services in the 'srv' folder

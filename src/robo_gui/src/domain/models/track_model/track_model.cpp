@@ -30,7 +30,6 @@ TrackModel::~TrackModel()
 void TrackModel::setTargetRect(const QRectF& rect)
 {
     if (rect == d->targetRect) return;
-    d->tracking = rect.isValid();
     d->targetRect = rect;
 
     emit targetRectChanged(rect);
@@ -66,4 +65,12 @@ QRectF TrackModel::captureRect() const
 bool TrackModel::isTracking() const
 {
     return d->tracking;
+}
+
+void TrackModel::setTracking(bool tracking)
+{
+    if (d->tracking == tracking) return;
+    d->tracking = tracking;
+
+    emit trackingStatusChanged(tracking);
 }

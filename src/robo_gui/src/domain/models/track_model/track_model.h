@@ -22,12 +22,14 @@ namespace domain
         void setCaptureRect(const QRectF& rect);
         QRectF captureRect() const;
 
+        void setTracking(bool tracking);
         bool isTracking() const;
 
     signals:
         void targetRectChanged(const QRectF& rect);
         void captureSizeChanged(const QSize& rect);
         void trackRequest(const QRectF& rect);
+        void trackingStatusChanged(bool tracking);
 
     private:
         class Impl;

@@ -57,10 +57,12 @@ public:
     Impl(ros::NodeHandle* nh) : nh(nh)
     {
         imageQualityPub = nh->advertise< std_msgs::UInt8 >("camera/image/quality", 0);
-        trackSelectorPub = nh->advertise< tracker::TrackerSelector >("tracker/selector", 1);
+        trackSelectorPub = nh->advertise< std_msgs::UInt8 >("tracker/selector", 1);
         trackPub = nh->advertise< tracker::Rect >("tracker/toggle", 1);
         trackSub = nh->subscribe("tracker/target", 1,
                    &MainWindow::Impl::onNewTarget, this);
+        trackStatusSub = nh->subscribe("tracker/status", 1,
+                                       &MainWindow::Impl::onTrackerStatusChanged, this);
         gamepadButtonsSub = nh->subscribe("gamepad/buttons", 20,
                                           &MainWindow::Impl::onButtonPressed, this);
     }
@@ -70,6 +72,7 @@ public:
     ros::Publisher trackSelectorPub;
     ros::Publisher imageQualityPub;
     ros::Subscriber trackSub;
+    ros::Subscriber trackStatusSub;
     ros::Subscriber gamepadButtonsSub;
 #ifdef ANDROID
     QAndroidJniObject wakeLock;
@@ -88,6 +91,7 @@ public:
     QTimer imageTimer;
 
     void onNewTarget(const tracker::RectPtr &rect);
+    void onTrackerStatusChanged(const std_msgs::UInt8& status);
     QImage mat2QImage(const cv::Mat& image) const;
     void onTrackRequest(const QRectF& rect);
     void onButtonPressed(const gamepad_controller::JsEvent& event);
@@ -136,6 +140,11 @@ void MainWindow::Impl::onButtonPressed(const gamepad_controller::JsEvent& event)
     }
 }
 
+void MainWindow::Impl::onTrackerStatusChanged(const std_msgs::UInt8& status)
+{
+    robo->track()->setTracking(status.data == 1);
+}
+
 //-----------------------------------------------------------------------
 MainWindow::MainWindow(ros::NodeHandle* nh, QObject* parent) :
     QObject(parent),
@@ -153,7 +162,8 @@ MainWindow::MainWindow(ros::NodeHandle* nh, QObject* parent) :
     connect(&d->imageTimer, &QTimer::timeout, this, &MainWindow::onImageTimeout);
 
 #ifdef ANDROID
-    d->imageSub.subscribe(*d->nh, "camera/image", 1, boost::bind(&MainWindow::onNewFrame, this, _1));
+    d->imageSub.subscribe(*d->nh, "camera/image", 1,
+                          boost::bind(&MainWindow::onNewFrame, this, _1));
 #else
     image_transport::ImageTransport it(*d->nh);
     d->imageSub = it.subscribe("camera/image", 1,
@@ -206,8 +216,10 @@ void MainWindow::connectTrackModel()
 
 void MainWindow::connectSettingsModel()
 {
-    connect(d->robo->settings(), &domain::SettingsModel::qualityChanged, this, &MainWindow::onChangeVideoQuality);
-    connect(d->robo->settings(), &domain::SettingsModel::trackerChanged, this, &MainWindow::onChangeTracker);
+    connect(d->robo->settings(), &domain::SettingsModel::qualityChanged,
+            this, &MainWindow::onChangeVideoQuality);
+    connect(d->robo->settings(), &domain::SettingsModel::trackerChanged,
+            this, &MainWindow::onChangeTracker);
 }
 
 void MainWindow::onChangeVideoQuality(int quality)
@@ -227,9 +239,9 @@ void MainWindow::onTrackRequest(const QRectF& rect)
 
 void MainWindow::onChangeTracker(int tracker)
 {
-    tracker::TrackerSelectorPtr t(new tracker::TrackerSelector);
-    t->code = tracker;
-    d->trackSelectorPub.publish(t);
+    std_msgs::UInt8 msg;
+    msg.data = tracker;
+    d->trackSelectorPub.publish(msg);
     ros::param::set("tracker/code", tracker);
 
     if (d->settings) d->settings->setValue(::trackerId, tracker);

@@ -22,6 +22,8 @@ TrackPresenter::TrackPresenter(domain::RoboModel *model, QObject *parent) :
             this, &TrackPresenter::targetRectChanged);
     connect(model->track(), &domain::TrackModel::captureSizeChanged,
             this, &TrackPresenter::captureSizeChanged);
+    connect(model->track(), &domain::TrackModel::trackingStatusChanged,
+            this, &TrackPresenter::trackingStatusChanged);
 }
 
 TrackPresenter::~TrackPresenter()
@@ -47,4 +49,9 @@ QSize TrackPresenter::captureSize() const
 void TrackPresenter::setCaptureFrameRect(const QRectF& rect)
 {
     d->model->track()->setCaptureRect(rect);
+}
+
+bool TrackPresenter::isTracking() const
+{
+    return d->model->track()->isTracking();
 }

@@ -4,7 +4,7 @@
 
 //msgs
 #include "tracker/Rect.h"
-#include "tracker/TrackerSelector.h"
+#include "std_msgs/UInt8.h"
 
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
@@ -35,6 +35,7 @@ public:
                    &TrackerNode::Impl::onSwitchTrackerRequest, this);
 
         targetPub = nh->advertise< tracker::Rect >("tracker/target", 1);
+        trackerStatusPub = nh->advertise< std_msgs::UInt8 >("tracker/status", 1);
     }
     image_transport::ImageTransport it;
     image_transport::Subscriber imageSub = it.subscribe("camera/image", 1,
@@ -42,6 +43,7 @@ public:
     ros::Subscriber toggleSub;
     ros::Subscriber selecterSub;
     ros::Publisher targetPub;
+    ros::Publisher trackerStatusPub;
 
     va::ITracker* tracker = nullptr;
     va::TrackerCode trackAlgo = va::TrackerCode(::defaultTracker);
@@ -51,7 +53,7 @@ public:
 
     void onNewFrame(const sensor_msgs::ImageConstPtr& msg);
     void onToggleRequest(const tracker::RectPtr &rect);
-    void onSwitchTrackerRequest(const tracker::TrackerSelectorPtr& request);
+    void onSwitchTrackerRequest(const std_msgs::UInt8 &code);
 
     void publishTarget(const cv::Rect& rect);
 };
@@ -115,11 +117,15 @@ void TrackerNode::Impl::onToggleRequest(const tracker::RectPtr& rect)
 
         targetPub.publish(rect);
     }
+
+    std_msgs::UInt8 msg;
+    msg.data = start;
+    trackerStatusPub.publish(msg);
 }
 
-void TrackerNode::Impl::onSwitchTrackerRequest(const tracker::TrackerSelectorPtr& request)
+void TrackerNode::Impl::onSwitchTrackerRequest(const std_msgs::UInt8& code)
 {
-    trackAlgo = va::TrackerCode(request->code);
+    trackAlgo = va::TrackerCode(code.data);
 }
 
 void TrackerNode::Impl::publishTarget(const cv::Rect& rect)

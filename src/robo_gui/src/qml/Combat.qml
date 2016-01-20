@@ -18,7 +18,7 @@ Item {
 
     Crosshair {
         anchors.centerIn: parent
-        visible: !target.valid
+        visible: !trackPresenter.isTracking
         width: 150
         height: 150
     }
@@ -26,7 +26,7 @@ Item {
     CaptureArea {
         id: capture
         anchors.centerIn: parent
-        visible: !target.valid && framePresenter.hasFrame
+        visible: !trackPresenter.isTracking && framePresenter.hasFrame
         presenter: trackPresenter
 
         Connections {
@@ -43,6 +43,7 @@ Item {
         y: trackPresenter.targetRect.y / page.scaleY
         width: trackPresenter.targetRect.width / page.scaleX
         height: trackPresenter.targetRect.height / page.scaleY
+        visible: trackPresenter.isTracking
     }
 
     SelectArea {

@@ -18,8 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
 # find_package(Boost REQUIRED COMPONENTS system)
 #find_package(OpenCV REQUIRED COMPONENTS tracking)
 set (OpenTLD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/OpenTLD/build)
-link_directories(${OpenTLD_DIR}/lib)
-find_package(OpenTLD)
+find_package(OpenTLD REQUIRED)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -54,7 +53,6 @@ find_package(OpenTLD)
 add_message_files(
   FILES
   Rect.msg
-  TrackerSelector.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -127,7 +125,6 @@ include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
   ${OPENTLD_INCLUDE_DIRS}
-  ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/OpenTLD/src/libopentld/tld/detector
 )
 
 ## Declare a C++ library
@@ -153,8 +150,7 @@ add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EX
 target_link_libraries(${PROJECT_NAME}
    ${catkin_LIBRARIES}
    ${OpenCV_LIBS}
-   ${OpenTLD_DIR}/lib/libopentld.a
-   gomp
+   ${OPENTLD_LIB_DIRS}/libopentld.a
 )
 
 #############
