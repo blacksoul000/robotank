@@ -1,0 +1,3 @@
+[submodule "src/tracker/3rdparty/OpenTLD"]
+	path = src/tracker/3rdparty/OpenTLD
+	url = https://github.com/blacksoul000/OpenTLD.git
