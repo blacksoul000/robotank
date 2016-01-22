@@ -80,7 +80,7 @@ void VideoSource::start(int cameraNumber)
     d->capturer.set(CV_CAP_PROP_FORMAT, CV_8UC3);
     d->capturer.set(CV_CAP_PROP_FRAME_HEIGHT, ::height);
     d->capturer.set(CV_CAP_PROP_FRAME_WIDTH, ::width);
-    d->capturer.set(CV_CAP_PROP_BRIGHTNESS, 85);
+    d->capturer.set(CV_CAP_PROP_BRIGHTNESS, 75);
     d->capturer.set(CV_CAP_PROP_CONTRAST, 95);
 
     if(!d->capturer.open())
