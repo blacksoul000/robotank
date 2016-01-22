@@ -62,7 +62,11 @@ void OpenTldAdapter::track(const cv::Mat& image)
         cvtColor(image, gray, CV_BGR2GRAY);
         d->tracker = new tld::TLD();
         d->tracker->learning = false;
-        d->tracker->detectorCascade->setImgSize(gray.cols, gray.rows, gray.step);
+
+        d->tracker->detectorCascade->imgWidth = gray.cols;
+        d->tracker->detectorCascade->imgHeight = gray.rows;
+        d->tracker->detectorCascade->imgWidthStep = gray.step;
+
         d->tracker->selectObject(gray, &d->target);
         d->inited = true;
         d->tracker->learning = true;
