@@ -9,7 +9,6 @@
 
 //msgs
 #include "tracker/Rect.h"
-#include "tracker/TrackerSelector.h"
 #include "gamepad_controller/JsEvent.h"
 
 //ros
