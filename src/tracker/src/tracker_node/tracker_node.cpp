@@ -56,6 +56,7 @@ public:
     void onSwitchTrackerRequest(const std_msgs::UInt8 &code);
 
     void publishTarget(const cv::Rect& rect);
+    void onTrackerStatusChanged(bool tracking);
 };
 
 TrackerNode::TrackerNode(ros::NodeHandle* nh) :
@@ -64,6 +65,8 @@ TrackerNode::TrackerNode(ros::NodeHandle* nh) :
     int code = 0;
     ros::param::param< int >("tracker/code", code, ::defaultTracker);
     d->trackAlgo = va::TrackerCode(code);
+    d->targetPub.publish(tracker::Rect());
+    d->onTrackerStatusChanged(false);
 }
 
 TrackerNode::~TrackerNode()
@@ -118,9 +121,7 @@ void TrackerNode::Impl::onToggleRequest(const tracker::RectPtr& rect)
         targetPub.publish(rect);
     }
 
-    std_msgs::UInt8 msg;
-    msg.data = start;
-    trackerStatusPub.publish(msg);
+    this->onTrackerStatusChanged(tracker && tracker->isTracking());
 }
 
 void TrackerNode::Impl::onSwitchTrackerRequest(const std_msgs::UInt8& code)
@@ -139,4 +140,11 @@ void TrackerNode::Impl::publishTarget(const cv::Rect& rect)
     r->width = rect.width / scaleX;
     r->height = rect.height / scaleY;
     targetPub.publish(r);
+}
+
+void TrackerNode::Impl::onTrackerStatusChanged(bool tracking)
+{
+    std_msgs::UInt8 msg;
+    msg.data = tracking;
+    trackerStatusPub.publish(msg);
 }
