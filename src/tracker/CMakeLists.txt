@@ -151,6 +151,8 @@ target_link_libraries(${PROJECT_NAME}
    ${catkin_LIBRARIES}
    ${OpenCV_LIBS}
    ${OpenTLD_DIR}/lib/libopentld.a
+   ${OpenTLD_DIR}/lib/libcvblobs.a
+   gomp
 )
 
 #############
