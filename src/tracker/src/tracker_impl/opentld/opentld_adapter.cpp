@@ -67,6 +67,15 @@ void OpenTldAdapter::track(const cv::Mat& image)
         d->tracker->detectorCascade->imgWidth = gray.cols;
         d->tracker->detectorCascade->imgHeight = gray.rows;
         d->tracker->detectorCascade->imgWidthStep = gray.step;
+        d->tracker->detectorCascade->useShift = true;
+        d->tracker->detectorCascade->shift = 0.1;
+        d->tracker->detectorCascade->minScale = -10;
+        d->tracker->detectorCascade->maxScale = 10;
+        d->tracker->detectorCascade->minSize = 25;
+        d->tracker->detectorCascade->numTrees = 10;
+        d->tracker->detectorCascade->numFeatures = 13;
+        d->tracker->detectorCascade->nnClassifier->thetaTP = 0.65;
+        d->tracker->detectorCascade->nnClassifier->thetaFP = 0.5;
 
         d->tracker->selectObject(gray, &d->target);
         d->inited = true;

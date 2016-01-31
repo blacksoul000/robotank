@@ -82,6 +82,7 @@ void VideoSource::start(int cameraNumber)
     d->capturer.set(CV_CAP_PROP_FRAME_WIDTH, ::width);
     d->capturer.set(CV_CAP_PROP_BRIGHTNESS, 75);
     d->capturer.set(CV_CAP_PROP_CONTRAST, 95);
+//    d->capturer.setVideoStabilization(true); //TODO
 
     if(!d->capturer.open())
 #else

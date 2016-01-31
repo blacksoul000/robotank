@@ -19,8 +19,8 @@ using va::TrackerNode;
 
 namespace
 {
-    const double width = 320;
-    const double height = 240;
+    const double width = 240;
+    const double height = 192;
     const int defaultTracker = 0;
 }  // namespace
 

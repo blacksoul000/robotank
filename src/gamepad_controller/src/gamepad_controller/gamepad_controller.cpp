@@ -77,9 +77,7 @@ void GamepadController::process()
             } else if (jsEvent.number == 2 || jsEvent.number == 5)
             {
                 d->analog2P.publish(jsEvent);
-//              via bt I get many "spam" events with numbers 6,7,8, so disabling
-//            } else if (jsEvent.number == 6 || jsEvent.number == 7) //usb connection
-            } else if (jsEvent.number == 9 || jsEvent.number == 10) //ds4drv(bluetooth) connection
+            } else if (jsEvent.number == 6 || jsEvent.number == 7)
             {
                 d->digitalP.publish(jsEvent);
             } else if (jsEvent.number == 3 || jsEvent.number == 4)
