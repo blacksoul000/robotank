@@ -8,8 +8,9 @@
 #include "presenter_factory.h"
 
 //msgs
-#include "tracker/Rect.h"
+#include "tracker/RectF.h"
 #include "gamepad_controller/JsEvent.h"
+#include "robo_core/PointF.h"
 
 //ros
 #include <ros/ros.h>
@@ -53,35 +54,33 @@ namespace
 class MainWindow::Impl
 {
 public:
-    Impl(ros::NodeHandle* nh) : nh(nh)
-    {
-        imageQualityPub = nh->advertise< std_msgs::UInt8 >("camera/image/quality", 0);
-        trackSelectorPub = nh->advertise< std_msgs::UInt8 >("tracker/selector", 1);
-        trackPub = nh->advertise< tracker::Rect >("tracker/toggle", 1);
-        trackSub = nh->subscribe("tracker/target", 1,
-                   &MainWindow::Impl::onNewTarget, this);
-        trackStatusSub = nh->subscribe("tracker/status", 1,
-                                       &MainWindow::Impl::onTrackerStatusChanged, this);
-        gamepadButtonsSub = nh->subscribe("gamepad/buttons", 20,
-                                          &MainWindow::Impl::onButtonPressed, this);
-    }
-    ros::NodeHandle* nh;
+//    Impl(ros::NodeHandle* nh) : nh(nh)
+//    {
+//        imageQualityPub = nh->advertise< std_msgs::UInt8 >("camera/image/quality", 0);
+//        trackSelectorPub = nh->advertise< std_msgs::UInt8 >("tracker/selector", 1);
+//        trackPub = nh->advertise< tracker::RectF >("tracker/toggle", 1);
+//        trackSub = nh->subscribe("tracker/target", 1,
+//                   &MainWindow::Impl::onNewTarget, this);
+//        trackStatusSub = nh->subscribe("tracker/status", 1,
+//                                       &MainWindow::Impl::onTrackerStatusChanged, this);
+//        gamepadButtonsSub = nh->subscribe("gamepad/buttons", 20,
+//                                          &MainWindow::Impl::onButtonPressed, this);
+//    }
+//    ros::NodeHandle* nh;
 
     ros::Publisher trackPub;
     ros::Publisher trackSelectorPub;
     ros::Publisher imageQualityPub;
-    ros::Subscriber trackSub;
-    ros::Subscriber trackStatusSub;
-    ros::Subscriber gamepadButtonsSub;
+//    ros::Subscriber trackSub;
+//    ros::Subscriber trackStatusSub;
+//    ros::Subscriber gamepadButtonsSub;
 #ifdef ANDROID
     QAndroidJniObject wakeLock;
     bool wakeLocked = false;
 //    image_transport's plugin system is not work because of the static ros libs
-//    so we need to hardcode using transport
+//    so we need to hardcode used transport
 //    and I'm failed to compile hardcoded transport at desktop =(
     compressed_image_transport::CompressedSubscriber imageSub;
-#else
-    image_transport::Subscriber imageSub;
 #endif
 
     domain::RoboModel* robo = nullptr;
@@ -89,66 +88,17 @@ public:
     QSettings* settings = nullptr;
     QTimer imageTimer;
 
-    void onNewTarget(const tracker::RectPtr &rect);
+    void onNewTarget(const tracker::RectFPtr &rect);
     void onTrackerStatusChanged(const std_msgs::UInt8& status);
     QImage mat2QImage(const cv::Mat& image) const;
     void onTrackRequest(const QRectF& rect);
     void onButtonPressed(const gamepad_controller::JsEvent& event);
+    void onCameraPositionChanged(const robo_core::PointF& position);
 };
 
-void MainWindow::Impl::onNewTarget(const tracker::RectPtr& rect)
-{
-    QRect r(rect->x, rect->y, rect->width, rect->height);
-    robo->track()->setTargetRect(r);
-}
-
-QImage MainWindow::Impl::mat2QImage(const cv::Mat& image) const
-{
-    QImage res(image.data, image.cols, image.rows, image.step, QImage::Format_RGB888);
-    return res.convertToFormat(QImage::Format_RGB32);
-}
-
-void MainWindow::Impl::onTrackRequest(const QRectF& rect)
-{
-    qDebug() << Q_FUNC_INFO << rect;
-    tracker::RectPtr r(new tracker::Rect);
-    r->x = rect.x();
-    r->y = rect.y();
-    r->width = rect.width();
-    r->height = rect.height();
-    trackPub.publish(r);
-}
-
-void MainWindow::Impl::onButtonPressed(const gamepad_controller::JsEvent& event)
-{
-//    ROS_WARN("type = %d, number = %d, value = %d", event.type, event.number, event.value);
-    switch (event.number)
-    {
-    case 0: //square
-        if (event.value == 0)
-        {
-            QRectF r = robo->track()->isTracking() ? QRectF() : robo->track()->captureRect();
-            this->onTrackRequest(r);
-        }
-        break;
-    case 3: //triangle
-        if (event.value == 0) robo->track()->nextCaptureSize();
-        break;
-    default:
-        break;
-    }
-}
-
-void MainWindow::Impl::onTrackerStatusChanged(const std_msgs::UInt8& status)
-{
-    robo->track()->setTargetRect(QRect());
-    robo->track()->setTracking(status.data == 1);
-}
-
-//-----------------------------------------------------------------------
 MainWindow::MainWindow(ros::NodeHandle* nh, QObject* parent) :
     QObject(parent),
-    d(new Impl(nh))
+    d(new Impl)
 {
     d->robo = new domain::RoboModel;
     d->viewer = new QQuickView;
@@ -161,13 +111,24 @@ MainWindow::MainWindow(ros::NodeHandle* nh, QObject* parent) :
     d->imageTimer.setInterval(::imageTimeout);
     connect(&d->imageTimer, &QTimer::timeout, this, &MainWindow::onImageTimeout);
 
+    // publishers
+    d->imageQualityPub = nh->advertise< std_msgs::UInt8 >("camera/image/quality", 0);
+    d->trackSelectorPub = nh->advertise< std_msgs::UInt8 >("tracker/selector", 1);
+    d->trackPub = nh->advertise< tracker::RectF >("tracker/toggle", 1);
+
+    //subscribers
+    nh->subscribe("camera/position", 5, &MainWindow::Impl::onCameraPositionChanged, d);
+    nh->subscribe("tracker/target", 1, &MainWindow::Impl::onNewTarget, d);
+    nh->subscribe("tracker/status", 1, &MainWindow::Impl::onTrackerStatusChanged, d);
+    nh->subscribe("gamepad/buttons", 20, &MainWindow::Impl::onButtonPressed, d);
+
 #ifdef ANDROID
-    d->imageSub.subscribe(*d->nh, "camera/image", 1,
+    d->imageSub.subscribe(*nh, "camera/image", 1,
                           boost::bind(&MainWindow::onNewFrame, this, _1));
 #else
-    image_transport::ImageTransport it(*d->nh);
-    d->imageSub = it.subscribe("camera/image", 1,
-                   boost::bind(&MainWindow::onNewFrame, this, _1), ros::VoidPtr(), transport);
+    image_transport::ImageTransport it(*nh);
+    it.subscribe("camera/image", 1,
+                   boost::bind(&MainWindow::onNewFrame, this, _1), ros::VoidPtr(), ::transport);
 #endif
 
     this->connectStatusModel();
@@ -289,4 +250,60 @@ void MainWindow::onFrameReceived()
         d->wakeLock.callMethod<void>("acquire", "()V");
     }
 #endif
+}
+
+
+//-------------------------------------------------------------------------------------------------
+void MainWindow::Impl::onNewTarget(const tracker::RectFPtr& rect)
+{
+    QRect r(rect->x, rect->y, rect->width, rect->height);
+    robo->track()->setTargetRect(r);
+}
+
+QImage MainWindow::Impl::mat2QImage(const cv::Mat& image) const
+{
+    QImage res(image.data, image.cols, image.rows, image.step, QImage::Format_RGB888);
+    return res.convertToFormat(QImage::Format_RGB32);
+}
+
+void MainWindow::Impl::onTrackRequest(const QRectF& rect)
+{
+    qDebug() << Q_FUNC_INFO << rect;
+    tracker::RectFPtr r(new tracker::RectF);
+    r->x = rect.x();
+    r->y = rect.y();
+    r->width = rect.width();
+    r->height = rect.height();
+    trackPub.publish(r);
+}
+
+void MainWindow::Impl::onButtonPressed(const gamepad_controller::JsEvent& event)
+{
+//    ROS_WARN("type = %d, number = %d, value = %d", event.type, event.number, event.value);
+    switch (event.number)
+    {
+    case 0: //square
+        if (event.value == 0)
+        {
+            QRectF r = robo->track()->isTracking() ? QRectF() : robo->track()->captureRect();
+            this->onTrackRequest(r);
+        }
+        break;
+    case 3: //triangle
+        if (event.value == 0) robo->track()->nextCaptureSize();
+        break;
+    default:
+        break;
+    }
+}
+
+void MainWindow::Impl::onTrackerStatusChanged(const std_msgs::UInt8& status)
+{
+    robo->track()->setTargetRect(QRect());
+    robo->track()->setTracking(status.data == 1);
+}
+
+void MainWindow::Impl::onCameraPositionChanged(const robo_core::PointF& position)
+{
+    ROS_WARN("onCameraPositionChanged: %f, %f", position.x, position.y);
 }

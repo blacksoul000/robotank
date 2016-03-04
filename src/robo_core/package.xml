@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>robo_gui</name>
+  <name>robo_core</name>
   <version>0.0.0</version>
-  <description>The robo_gui package</description>
+  <description>The robo_core package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but mutiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/robo_gui</url> -->
+  <!-- <url type="website">http://wiki.ros.org/robo_core</url> -->
 
 
   <!-- Author tags are optional, mutiple are allowed, one per tag -->
@@ -41,22 +41,17 @@
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>roscpp</build_depend>
-  <build_depend>sensor_msgs</build_depend>
   <build_depend>std_msgs</build_depend>
   <build_depend>message_generation</build_depend>
-  <build_depend>cv_bridge</build_depend>
   <build_depend>tracker</build_depend>
+  <build_depend>video_source</build_depend>
   <build_depend>gamepad_controller</build_depend>
-  <build_depend>robo_core</build_depend>
   <run_depend>roscpp</run_depend>
-  <run_depend>rospy</run_depend>
-  <run_depend>sensor_msgs</run_depend>
   <run_depend>std_msgs</run_depend>
   <run_depend>message_runtime</run_depend>
-  <run_depend>cv_bridge</run_depend>
   <run_depend>tracker</run_depend>
+  <run_depend>video_source</run_depend>
   <run_depend>gamepad_controller</run_depend>
-  <run_depend>robo_core</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

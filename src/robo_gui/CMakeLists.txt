@@ -31,7 +31,7 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   compressed_image_transport
   compressed_depth_image_transport
-  message_generation
+#  message_generation
   rospack
 )
 
@@ -89,10 +89,10 @@ endif()
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  Rect.msg
-)
+#add_message_files(
+#  FILES
+#  Rect.msg
+#)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -109,11 +109,11 @@ add_message_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  sensor_msgs
-  std_msgs
-)
+#generate_messages(
+#  DEPENDENCIES
+#  sensor_msgs
+#  std_msgs
+#)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -147,8 +147,9 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES robo_gui
-  CATKIN_DEPENDS message_runtime roscpp rospy sensor_msgs std_msgs cv_bridge tracker
-#                dynamic_reconfigure
+  CATKIN_DEPENDS roscpp rospy sensor_msgs std_msgs cv_bridge tracker
+                gamepad_controller robo_core
+#                message_runtime dynamic_reconfigure
 #  DEPENDS system_lib
 )
 

@@ -3,7 +3,8 @@
 #include "trackers.h"
 
 //msgs
-#include "tracker/Rect.h"
+#include "tracker/RectF.h"
+#include "tracker/PointF.h"
 #include "std_msgs/UInt8.h"
 
 #include <ros/ros.h>
@@ -27,22 +28,23 @@ namespace
 class TrackerNode::Impl
 {
 public:
-    Impl(ros::NodeHandle* nh) : it(*nh)
-    {
-        toggleSub = nh->subscribe("tracker/toggle", 1,
-                   &TrackerNode::Impl::onToggleRequest, this);
-        selecterSub = nh->subscribe("tracker/selector", 1,
-                   &TrackerNode::Impl::onSwitchTrackerRequest, this);
+//    Impl(ros::NodeHandle* nh) : it(*nh)
+//    {
+//        toggleSub = nh->subscribe("tracker/toggle", 1,
+//                   &TrackerNode::Impl::onToggleRequest, this);
+//        selecterSub = nh->subscribe("tracker/selector", 1,
+//                   &TrackerNode::Impl::onSwitchTrackerRequest, this);
 
-        targetPub = nh->advertise< tracker::Rect >("tracker/target", 1);
-        trackerStatusPub = nh->advertise< std_msgs::UInt8 >("tracker/status", 1);
-    }
-    image_transport::ImageTransport it;
-    image_transport::Subscriber imageSub = it.subscribe("camera/image", 1,
-                    boost::bind(&TrackerNode::Impl::onNewFrame, this, _1));
-    ros::Subscriber toggleSub;
-    ros::Subscriber selecterSub;
+//        targetPub = nh->advertise< tracker::RectF >("tracker/target", 1);
+//        trackerStatusPub = nh->advertise< std_msgs::UInt8 >("tracker/status", 1);
+//    }
+//    image_transport::ImageTransport it;
+//    image_transport::Subscriber imageSub = it.subscribe("camera/image", 1,
+//                    boost::bind(&TrackerNode::Impl::onNewFrame, this, _1));
+//    ros::Subscriber toggleSub;
+//    ros::Subscriber selecterSub;
     ros::Publisher targetPub;
+    ros::Publisher deviationPub;
     ros::Publisher trackerStatusPub;
 
     va::ITracker* tracker = nullptr;
@@ -52,21 +54,32 @@ public:
     int64_t prevTime = 0;
 
     void onNewFrame(const sensor_msgs::ImageConstPtr& msg);
-    void onToggleRequest(const tracker::RectPtr &rect);
-    void onSwitchTrackerRequest(const std_msgs::UInt8 &code);
+    void onToggleRequest(const tracker::RectFPtr& rect);
+    void onSwitchTrackerRequest(const std_msgs::UInt8& code);
 
     void publishTarget(const cv::Rect& rect);
+    void publishDeviation(const cv::Rect& rect);
     void onTrackerStatusChanged(bool tracking);
 };
 
 TrackerNode::TrackerNode(ros::NodeHandle* nh) :
-    d(new Impl(nh))
+//    d(new Impl(nh))
+    d(new Impl)
 {
     int code = 0;
     ros::param::param< int >("tracker/code", code, ::defaultTracker);
     d->trackAlgo = va::TrackerCode(code);
-    d->targetPub.publish(tracker::Rect());
+    d->targetPub.publish(tracker::RectF());
     d->onTrackerStatusChanged(false);
+
+    image_transport::ImageTransport it(*nh);
+    it.subscribe("camera/image", 1, boost::bind(&TrackerNode::Impl::onNewFrame, d, _1));
+    nh->subscribe("tracker/toggle", 1, &TrackerNode::Impl::onToggleRequest, d);
+    nh->subscribe("tracker/selector", 1, &TrackerNode::Impl::onSwitchTrackerRequest, d);
+
+    d->targetPub = nh->advertise< tracker::RectF >("tracker/target", 1);
+    d->deviationPub = nh->advertise< tracker::PointF >("tracker/deviation", 1);
+    d->trackerStatusPub = nh->advertise< std_msgs::UInt8 >("tracker/status", 1);
 }
 
 TrackerNode::~TrackerNode()
@@ -89,6 +102,7 @@ void TrackerNode::Impl::onNewFrame(const sensor_msgs::ImageConstPtr &msg)
     tracker->track(scaled);
 
     this->publishTarget(tracker->target());
+    this->publishDeviation(tracker->target());
 
     int64_t e = (std::chrono::duration_cast< std::chrono::microseconds >(
                     std::chrono::system_clock::now().time_since_epoch()).count());
@@ -97,7 +111,7 @@ void TrackerNode::Impl::onNewFrame(const sensor_msgs::ImageConstPtr &msg)
     prevTime = e;
 }
 
-void TrackerNode::Impl::onToggleRequest(const tracker::RectPtr& rect)
+void TrackerNode::Impl::onToggleRequest(const tracker::RectFPtr& rect)
 {
     ROS_WARN("toggle %f, %f, %f, %f", rect->x, rect->y, rect->width, rect->height);
     bool start = (rect->width != 0 && rect->height != 0);
@@ -134,12 +148,27 @@ void TrackerNode::Impl::publishTarget(const cv::Rect& rect)
     const double scaleX = ::width / imageWidth;
     const double scaleY = ::height / imageHeight;
 
-    tracker::RectPtr r(new tracker::Rect);
+    tracker::RectFPtr r(new tracker::RectF);
     r->x = rect.x / scaleX;
     r->y = rect.y / scaleY;
     r->width = rect.width / scaleX;
     r->height = rect.height / scaleY;
     targetPub.publish(r);
+}
+
+void TrackerNode::Impl::publishDeviation(const cv::Rect& rect)
+{
+    const double scaleX = ::width / imageWidth;
+    const double scaleY = ::height / imageHeight;
+    const double targetCenterX = (rect.x + rect.width) / 2;
+    const double targetCenterY = (rect.y + rect.height) / 2;
+    const double imageCenterX = imageWidth / 2;
+    const double imageCenterY = imageHeight / 2;
+
+    tracker::PointFPtr r(new tracker::PointF);
+    r->x = imageCenterX - (targetCenterX / scaleX);
+    r->y = imageCenterY - (targetCenterY / scaleY);
+    deviationPub.publish(r);
 }
 
 void TrackerNode::Impl::onTrackerStatusChanged(bool tracking)

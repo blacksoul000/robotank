@@ -1,29 +1,19 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(video_source)
-
+project(arduino_exchanger)
 add_definitions(-std=c++11)
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} /usr/local/lib/cmake/)
-
-if (PICAM STREQUAL "ON")
-    add_definitions(-DPICAM)
-    find_package(raspicam REQUIRED)
-endif()
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  cv_bridge
   roscpp
-  sensor_msgs
   std_msgs
-  image_transport
-  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-
+set(LIBS
+)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -55,10 +45,9 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-   FILES
-   PointF.msg
-)
+# add_message_files(
+#    FILES
+# )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -75,10 +64,10 @@ add_message_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-   DEPENDENCIES
-   std_msgs
-)
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -111,8 +100,8 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES video_source
-  CATKIN_DEPENDS roscpp sensor_msgs std_msgs message_runtime
+#  LIBRARIES ${PROJECT_NAME}
+  CATKIN_DEPENDS roscpp std_msgs robo_core
 #  DEPENDS system_lib
 )
 
@@ -127,9 +116,15 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 include_directories(${CATKIN_DEVEL_PREFIX}/include)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/RecurseDirs.cmake)
+
+file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
+HEADER_DIRECTORIES(src DIRS)
+include_directories(${DIRS})
+
 ## Declare a C++ library
-# add_library(video_source
-#   src/${PROJECT_NAME}/video_source.cpp
+# add_library(${PROJECT_NAME}
+#   src/${PROJECT_NAME}/${PROJECT_NAME}.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -137,24 +132,18 @@ include_directories(${CATKIN_DEVEL_PREFIX}/include)
 ## either from message generation or dynamic reconfigure
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-file(GLOB_RECURSE SOURCES src *.cpp)
-
 ## Declare a C++ executable
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
- add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(${PROJECT_NAME}
-   ${catkin_LIBRARIES}
- )
-
-if (PICAM STREQUAL "ON")
-    target_link_libraries(${PROJECT_NAME} ${raspicam_CV_LIBS})
-endif()
-
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${LIBS}
+)
 
 #############
 ## Install ##
@@ -171,7 +160,7 @@ endif()
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS video_source video_source_node
+# install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -196,7 +185,7 @@ endif()
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_video_source.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_arduino_controller.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

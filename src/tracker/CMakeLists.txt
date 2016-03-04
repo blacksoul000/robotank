@@ -52,7 +52,8 @@ find_package(OpenTLD REQUIRED)
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  Rect.msg
+  RectF.msg
+  PointF.msg
 )
 
 ## Generate services in the 'srv' folder
