@@ -31,7 +31,6 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   compressed_image_transport
   compressed_depth_image_transport
-#  message_generation
   rospack
 )
 
@@ -147,8 +146,7 @@ endif()
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES robo_gui
-  CATKIN_DEPENDS roscpp rospy sensor_msgs std_msgs cv_bridge tracker
-                gamepad_controller robo_core
+  CATKIN_DEPENDS tracker gamepad_controller robo_core
 #                message_runtime dynamic_reconfigure
 #  DEPENDS system_lib
 )
