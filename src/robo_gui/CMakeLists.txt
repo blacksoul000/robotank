@@ -10,8 +10,6 @@ if(ANDROID)
     set (ANDROID_COMPILER_VERSION 4.9)
 
     set (QTDIR /opt/Qt/5.5)
-#    set (QTDIR /opt/Qt5.6.0/5.6)
-    set (QT_ANDROID_SDK_ROOT /home/blacksoul/workspace/android/android-sdk-linux)
     set (Qt5Core_DIR ${QTDIR}/android_armv7/lib/cmake/Qt5Core)
     set (Qt5Gui_DIR ${QTDIR}/android_armv7/lib/cmake/Qt5Gui)
     set (Qt5Quick_DIR ${QTDIR}/android_armv7/lib/cmake/Qt5Quick)

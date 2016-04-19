@@ -141,6 +141,7 @@ void MainWindow::Impl::onButtonPressed(const gamepad_controller::JsEvent& event)
 
 void MainWindow::Impl::onTrackerStatusChanged(const std_msgs::UInt8& status)
 {
+    robo->track()->setTargetRect(QRect());
     robo->track()->setTracking(status.data == 1);
 }
 

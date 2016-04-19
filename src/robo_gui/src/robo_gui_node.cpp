@@ -23,8 +23,12 @@ int main(int argc, char** argv)
              selfIp = address;
     }
     std::string ip = "__ip:=" + selfIp.toString().toStdString();
+    char s0[] = "robo_gui_droid";
+    char s1[] = "__master:=http://192.168.1.3:11311";
+    char s2[ip.length() + 1];
+    strcpy(s2, ip.c_str());
+    char* v[] = {s0, s1, s2};
     int c = 3;
-    char *v[] = {"robo_gui_droid" , "__master:=http://192.168.1.213:11311", &ip[0]};
 
     ros::init(c, &v[0], "robo_gui_droid");
 #else

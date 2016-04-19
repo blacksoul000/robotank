@@ -4,7 +4,7 @@ src/CMakeLists.txt
 *Makefile
 *android.pro
 *android*.json
-**/android_build
+**/android-build
 
 build
 devel
