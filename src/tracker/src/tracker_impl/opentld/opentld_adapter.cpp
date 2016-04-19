@@ -5,6 +5,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv/cv.h>
+#include "opencv2/core/utility.hpp"
 
 #include <iostream>
 
@@ -61,7 +62,7 @@ void OpenTldAdapter::track(const cv::Mat& image)
         cv::Mat gray;
         cvtColor(image, gray, CV_BGR2GRAY);
         d->tracker = new tld::TLD();
-        d->tracker->learning = false;
+        d->tracker->learningEnabled = false;
 
         d->tracker->detectorCascade->imgWidth = gray.cols;
         d->tracker->detectorCascade->imgHeight = gray.rows;
@@ -78,7 +79,7 @@ void OpenTldAdapter::track(const cv::Mat& image)
 
         d->tracker->selectObject(gray, &d->target);
         d->inited = true;
-        d->tracker->learning = true;
+        d->tracker->learningEnabled = true;
     }
 
     d->tracker->processImage(image);
