@@ -34,15 +34,6 @@ namespace
 class VideoSource::Impl
 {
 public:
-//    Impl(ros::NodeHandle* nh) : nh(nh), it(*nh)
-//    {
-//        imageQualitySub = nh->subscribe("camera/image/quality", 0,
-//                    &VideoSource::Impl::onQualityChangeRequest, this);
-//    }
-//    ros::NodeHandle* nh = nullptr;
-//    image_transport::ImageTransport it;
-//    image_transport::Publisher publisher = it.advertise("camera/image", 1);
-    image_transport::Publisher imagePublisher;
 #ifdef PICAM
     raspicam::RaspiCam_Cv capturer;
 #else
@@ -50,9 +41,9 @@ public:
 #endif //PICAM
     int fps = 0;
     volatile bool stop = false;
-//    ros::Subscriber imageQualitySub;
-    image_transport::Publisher publisher;
+    image_transport::Publisher imagePublisher;
     ros::Publisher dotsPerDegreePublisher;
+    ros::Subscriber imageQualitySub;
 
     void onQualityChangeRequest(const std_msgs::UInt8& msg);
     void onQualityChangeRequestImpl(int quality);
@@ -83,7 +74,8 @@ VideoSource::VideoSource(ros::NodeHandle* nh, int fps) :
     image_transport::ImageTransport it(*nh);
     d->imagePublisher = it.advertise("camera/image", 1);
     d->dotsPerDegreePublisher = nh->advertise< video_source::PointF >("camera/dotsPerDegree", 1);
-    nh->subscribe("camera/image/quality", 0, &VideoSource::Impl::onQualityChangeRequest, d);
+    d->imageQualitySub = nh->subscribe("camera/image/quality", 0,
+                                       &VideoSource::Impl::onQualityChangeRequest, d);
 }
 
 VideoSource::~VideoSource()

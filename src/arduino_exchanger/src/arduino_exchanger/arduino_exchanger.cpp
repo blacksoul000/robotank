@@ -24,7 +24,9 @@ namespace
     };
     struct RaspberryPkg
     {
-        bool bySpeed = false;
+        int8_t bySpeed : 1;
+        int8_t deviceId : 4;
+        int8_t reserve : 3;
         int16_t x = 0;
         int16_t y = 0;
     };
@@ -41,6 +43,7 @@ public:
     int fd = -1;
 
     ros::Publisher positionPub;
+    ros::Subscriber influenceSub;
 
     bool open();
     bool isOpened() const;
@@ -53,7 +56,7 @@ ArduinoExchanger::ArduinoExchanger(ros::NodeHandle* nh, const std::string& path,
     d->device = path;
     d->address = address;
     d->positionPub = nh->advertise< robo_core::PointF >("camera/position", 1);
-    nh->subscribe("core/influence", 10, &ArduinoExchanger::Impl::onInfluence, d);
+    d->influenceSub = nh->subscribe("core/influence", 10, &ArduinoExchanger::Impl::onInfluence, d);
 }
 
 ArduinoExchanger::~ArduinoExchanger()
@@ -64,7 +67,7 @@ ArduinoExchanger::~ArduinoExchanger()
 
 void ArduinoExchanger::process()
 {
-    if (!d->isOpened()) d->open();
+    if (!d->isOpened() && !d->open()) return;
 
     ::ArduinoPkg pkg;
     if (read(d->fd, reinterpret_cast<char *>(&pkg), sizeof(pkg)) != sizeof(pkg))
@@ -81,7 +84,8 @@ void ArduinoExchanger::process()
 //------------------------------------------------------------------------------------
 bool ArduinoExchanger::Impl::open()
 {
-    if (fd = ::open(device.c_str(), O_RDONLY | O_NONBLOCK))
+    fd = ::open(device.c_str(), O_RDONLY | O_NONBLOCK);
+    if (fd < 0)
     {
         ROS_DEBUG_ONCE("Failed to open %s", device.c_str());
         return false;
@@ -101,9 +105,10 @@ bool ArduinoExchanger::Impl::isOpened() const
 
 void ArduinoExchanger::Impl::onInfluence(const robo_core::Influence& influence)
 {
-    ROS_WARN("onInfluence");
+    ROS_WARN("onInfluence: %d, %f, %f", influence.deviceId, influence.x, influence.y);
     ::RaspberryPkg pkg;
     pkg.bySpeed = influence.bySpeed;
+    pkg.deviceId = influence.deviceId;
     pkg.x = influence.x / ::influenceCoef;
     pkg.y = influence.y / ::influenceCoef;
     if (write(fd, reinterpret_cast<const char *>(&pkg), sizeof(pkg)) != sizeof(pkg))

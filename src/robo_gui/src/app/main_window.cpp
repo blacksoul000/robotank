@@ -54,26 +54,13 @@ namespace
 class MainWindow::Impl
 {
 public:
-//    Impl(ros::NodeHandle* nh) : nh(nh)
-//    {
-//        imageQualityPub = nh->advertise< std_msgs::UInt8 >("camera/image/quality", 0);
-//        trackSelectorPub = nh->advertise< std_msgs::UInt8 >("tracker/selector", 1);
-//        trackPub = nh->advertise< tracker::RectF >("tracker/toggle", 1);
-//        trackSub = nh->subscribe("tracker/target", 1,
-//                   &MainWindow::Impl::onNewTarget, this);
-//        trackStatusSub = nh->subscribe("tracker/status", 1,
-//                                       &MainWindow::Impl::onTrackerStatusChanged, this);
-//        gamepadButtonsSub = nh->subscribe("gamepad/buttons", 20,
-//                                          &MainWindow::Impl::onButtonPressed, this);
-//    }
-//    ros::NodeHandle* nh;
-
     ros::Publisher trackPub;
     ros::Publisher trackSelectorPub;
     ros::Publisher imageQualityPub;
-//    ros::Subscriber trackSub;
-//    ros::Subscriber trackStatusSub;
-//    ros::Subscriber gamepadButtonsSub;
+    ros::Subscriber trackSub;
+    ros::Subscriber trackStatusSub;
+    ros::Subscriber gamepadButtonsSub;
+    ros::Subscriber towerPositionSub;
 #ifdef ANDROID
     QAndroidJniObject wakeLock;
     bool wakeLocked = false;
@@ -81,6 +68,8 @@ public:
 //    so we need to hardcode used transport
 //    and I'm failed to compile hardcoded transport at desktop =(
     compressed_image_transport::CompressedSubscriber imageSub;
+#else
+    image_transport::Subscriber imageSub;
 #endif
 
     domain::RoboModel* robo = nullptr;
@@ -117,28 +106,17 @@ MainWindow::MainWindow(ros::NodeHandle* nh, QObject* parent) :
     d->trackPub = nh->advertise< tracker::RectF >("tracker/toggle", 1);
 
     //subscribers
-    nh->subscribe("camera/position", 5, &MainWindow::Impl::onCameraPositionChanged, d);
-    nh->subscribe("tracker/target", 1, &MainWindow::Impl::onNewTarget, d);
-    nh->subscribe("tracker/status", 1, &MainWindow::Impl::onTrackerStatusChanged, d);
-    nh->subscribe("gamepad/buttons", 20, &MainWindow::Impl::onButtonPressed, d);
+    d->towerPositionSub = nh->subscribe("camera/position", 5,
+                                        &MainWindow::Impl::onCameraPositionChanged, d);
+    d->trackSub = nh->subscribe("tracker/target", 1, &MainWindow::Impl::onNewTarget, d);
+    d->trackStatusSub = nh->subscribe("tracker/status", 1,
+                                        &MainWindow::Impl::onTrackerStatusChanged, d);
+    d->gamepadButtonsSub = nh->subscribe("gamepad/buttons", 20,
+                                        &MainWindow::Impl::onButtonPressed, d);
 
 #ifdef ANDROID
     d->imageSub.subscribe(*nh, "camera/image", 1,
                           boost::bind(&MainWindow::onNewFrame, this, _1));
-#else
-    image_transport::ImageTransport it(*nh);
-    it.subscribe("camera/image", 1,
-                   boost::bind(&MainWindow::onNewFrame, this, _1), ros::VoidPtr(), ::transport);
-#endif
-
-    this->connectStatusModel();
-    this->connectTrackModel();
-    this->connectSettingsModel();
-
-    connect(d->viewer->engine(), &QQmlEngine::quit, qApp, &QCoreApplication::quit);
-    connect(this, &MainWindow::frameReceived, this, &MainWindow::onFrameReceived);
-
-#ifdef ANDROID
     QAndroidJniObject activity = QtAndroid::androidActivity();
 
     QAndroidJniObject serviceName = QAndroidJniObject::getStaticObjectField<jstring>(
@@ -151,8 +129,18 @@ MainWindow::MainWindow(ros::NodeHandle* nh, QObject* parent) :
                                         "(ILjava/lang/String;)Landroid/os/PowerManager$WakeLock;",
                                         6, //SCREEN_DIM_WAKE_LOCK
                                         tag.object<jstring>());
+#else
+    image_transport::ImageTransport it(*nh);
+    d->imageSub = it.subscribe("camera/image", 1,
+                   boost::bind(&MainWindow::onNewFrame, this, _1), ros::VoidPtr(), ::transport);
 #endif
 
+    this->connectStatusModel();
+    this->connectTrackModel();
+    this->connectSettingsModel();
+
+    connect(d->viewer->engine(), &QQmlEngine::quit, qApp, &QCoreApplication::quit);
+    connect(this, &MainWindow::frameReceived, this, &MainWindow::onFrameReceived);
 }
 
 MainWindow::~MainWindow()

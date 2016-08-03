@@ -15,12 +15,27 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
+#include <limits>
 
 using robo_core::RoboCore;
 
 namespace
 {
     const float defaultDotsPerDegree = 100;
+
+    enum DeviceId
+    {
+        Chassis = 0,
+        Tower = 1
+    };
+
+    enum Axes
+    {
+        X1 = 0,
+        Y1 = 1,
+        X2 = 2,
+        Y2 = 5
+    };
 }
 
 class RoboCore::Impl
@@ -31,6 +46,12 @@ public:
     robo_core::Influence influenceTower;
 
     ros::Publisher influenceP;
+    ros::Subscriber analog1S;
+    ros::Subscriber analog2S;
+    ros::Subscriber trackerS;
+    ros::Subscriber trackerStatusS;
+    ros::Subscriber dpdS;
+
     video_source::PointF dotsPerDegree;
     void onChassisEvent(const gamepad_controller::JsEvent& event);
     void onTowerEvent(const gamepad_controller::JsEvent& event);
@@ -46,13 +67,16 @@ RoboCore::RoboCore(ros::NodeHandle* nh):
 {
     d->influenceP = nh->advertise< robo_core::Influence >("core/influence", 10);
     d->influenceChassis.bySpeed = true;
+    d->influenceChassis.deviceId = ::DeviceId::Chassis;
     d->influenceTower.bySpeed = true;
+    d->influenceChassis.deviceId = ::DeviceId::Tower;
 
-    nh->subscribe("tracker/status", 1, &RoboCore::Impl::onTrackerStatusChanged, d);
-    nh->subscribe("tracker/deviation", 1, &RoboCore::Impl::onTrackerDeviation, d);
-    nh->subscribe("gamepad/analog1", 20, &RoboCore::Impl::onChassisEvent, d);
-    nh->subscribe("gamepad/analog2", 20, &RoboCore::Impl::onTowerEvent, d);
-    nh->subscribe("camera/dotsPerDegree", 1, &RoboCore::Impl::onDotsPerDegreeChanged, d);
+    d->trackerStatusS = nh->subscribe("tracker/status", 1,
+                                      &RoboCore::Impl::onTrackerStatusChanged, d);
+    d->trackerS = nh->subscribe("tracker/deviation", 1, &RoboCore::Impl::onTrackerDeviation, d);
+    d->analog1S = nh->subscribe("gamepad/analog1", 20, &RoboCore::Impl::onChassisEvent, d);
+    d->analog2S = nh->subscribe("gamepad/analog2", 20, &RoboCore::Impl::onTowerEvent, d);
+    d->dpdS = nh->subscribe("camera/dotsPerDegree", 1, &RoboCore::Impl::onDotsPerDegreeChanged, d);
 
     ros::param::param< float >("camera/dotsPerDegreeH", d->dotsPerDegree.x, ::defaultDotsPerDegree);
     ros::param::param< float >("camera/dotsPerDegreeV", d->dotsPerDegree.y, ::defaultDotsPerDegree);
@@ -69,13 +93,14 @@ void RoboCore::Impl::onChassisEvent(const gamepad_controller::JsEvent& event)
     ROS_WARN("onJsAnalog1: type = %d, number = %d, value = %d", event.type, event.number, event.value);
 
     auto& inf = influenceChassis;
+    const double value = this->smooth(event.value, SHRT_MAX);
     switch (event.number)
     {
-    case 0x0: // 2nd Axis X
-        inf.x = event.value;
+    case Axes::X1:
+        inf.x = value;
         break;
-    case 0x1: // 2nd Axis Y
-        inf.y = event.value;
+    case Axes::Y1:
+        inf.y = value;
         break;
     default:
         return;
@@ -86,15 +111,16 @@ void RoboCore::Impl::onChassisEvent(const gamepad_controller::JsEvent& event)
 void RoboCore::Impl::onTowerEvent(const gamepad_controller::JsEvent& event)
 {
     if (state != State::Search) return;
-    ROS_WARN("onJsAnalog1: type = %d, number = %d, value = %d", event.type, event.number, event.value);
+    ROS_WARN("onJsAnalog2: type = %d, number = %d, value = %d", event.type, event.number, event.value);
     auto& inf = influenceTower;
+    const double value = this->smooth(event.value, SHRT_MAX);
     switch (event.number)
     {
-    case 0x2: // 2nd Axis X
-        inf.x = event.value;
+    case Axes::X2:
+        inf.x = value;
         break;
-    case 0x3: // 2nd Axis Y
-        inf.y = event.value;
+    case Axes::Y2:
+        inf.y = value;
         break;
     default:
         return;

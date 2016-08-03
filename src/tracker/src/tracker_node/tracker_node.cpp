@@ -28,21 +28,9 @@ namespace
 class TrackerNode::Impl
 {
 public:
-//    Impl(ros::NodeHandle* nh) : it(*nh)
-//    {
-//        toggleSub = nh->subscribe("tracker/toggle", 1,
-//                   &TrackerNode::Impl::onToggleRequest, this);
-//        selecterSub = nh->subscribe("tracker/selector", 1,
-//                   &TrackerNode::Impl::onSwitchTrackerRequest, this);
-
-//        targetPub = nh->advertise< tracker::RectF >("tracker/target", 1);
-//        trackerStatusPub = nh->advertise< std_msgs::UInt8 >("tracker/status", 1);
-//    }
-//    image_transport::ImageTransport it;
-//    image_transport::Subscriber imageSub = it.subscribe("camera/image", 1,
-//                    boost::bind(&TrackerNode::Impl::onNewFrame, this, _1));
-//    ros::Subscriber toggleSub;
-//    ros::Subscriber selecterSub;
+    ros::Subscriber toggleSub;
+    ros::Subscriber selectorSub;
+    image_transport::Subscriber imageSub;
     ros::Publisher targetPub;
     ros::Publisher deviationPub;
     ros::Publisher trackerStatusPub;
@@ -73,9 +61,11 @@ TrackerNode::TrackerNode(ros::NodeHandle* nh) :
     d->onTrackerStatusChanged(false);
 
     image_transport::ImageTransport it(*nh);
-    it.subscribe("camera/image", 1, boost::bind(&TrackerNode::Impl::onNewFrame, d, _1));
-    nh->subscribe("tracker/toggle", 1, &TrackerNode::Impl::onToggleRequest, d);
-    nh->subscribe("tracker/selector", 1, &TrackerNode::Impl::onSwitchTrackerRequest, d);
+    d->imageSub = it.subscribe("camera/image", 1,
+                               boost::bind(&TrackerNode::Impl::onNewFrame, d, _1));
+    d->toggleSub = nh->subscribe("tracker/toggle", 1, &TrackerNode::Impl::onToggleRequest, d);
+    d->selectorSub = nh->subscribe("tracker/selector", 1,
+                                   &TrackerNode::Impl::onSwitchTrackerRequest, d);
 
     d->targetPub = nh->advertise< tracker::RectF >("tracker/target", 1);
     d->deviationPub = nh->advertise< tracker::PointF >("tracker/deviation", 1);
