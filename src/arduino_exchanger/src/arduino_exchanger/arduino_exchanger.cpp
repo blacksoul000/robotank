@@ -17,6 +17,7 @@ using arduino::ArduinoExchanger;
 
 namespace
 {
+#pragma pack(push, 1)
     struct ArduinoPkg
     {
         int16_t x = 0;
@@ -30,6 +31,7 @@ namespace
         int16_t x = 0;
         int16_t y = 0;
     };
+#pragma pack(pop)
 
     constexpr double positionCoef = 360.0 / 32767;
     constexpr double influenceCoef = 90.0 / 32767;
@@ -68,7 +70,6 @@ ArduinoExchanger::~ArduinoExchanger()
 void ArduinoExchanger::process()
 {
     if (!d->isOpened() && !d->open()) return;
-
     ::ArduinoPkg pkg;
     if (read(d->fd, reinterpret_cast<char *>(&pkg), sizeof(pkg)) != sizeof(pkg))
     {
@@ -78,13 +79,26 @@ void ArduinoExchanger::process()
     robo_core::PointF msg;
     msg.x = pkg.x * ::positionCoef;
     msg.y = pkg.y * ::positionCoef;
+    ROS_WARN("Position: (%d, %d).", pkg.x, pkg.y);
     d->positionPub.publish(msg);
+
+/*
+    ::RaspberryPkg pkg1;
+    pkg1.bySpeed = 1;
+    pkg1.deviceId = 0;
+    pkg1.x = 234;
+    pkg1.y = 12354;
+    if (write(d->fd, reinterpret_cast<const char *>(&pkg1), sizeof(pkg1)) != sizeof(pkg1))
+    {
+        ROS_WARN("Failed to write to the i2c bus. %d");
+    }
+*/
 }
 
 //------------------------------------------------------------------------------------
 bool ArduinoExchanger::Impl::open()
 {
-    fd = ::open(device.c_str(), O_RDONLY | O_NONBLOCK);
+    fd = ::open(device.c_str(), O_RDWR);
     if (fd < 0)
     {
         ROS_DEBUG_ONCE("Failed to open %s", device.c_str());

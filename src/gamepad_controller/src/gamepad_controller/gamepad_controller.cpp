@@ -43,11 +43,11 @@ GamepadController::GamepadController(ros::NodeHandle* nh, const std::string& pat
 {
     d->device = path;
 //    d->statusP = nh->advertise< JsEvent >("gamepad/status", 1000);
-    d->analog1P = nh->advertise< JsEvent >("gamepad/analog1", 50);
-    d->analog2P = nh->advertise< JsEvent >("gamepad/analog2", 50);
-    d->digitalP = nh->advertise< JsEvent >("gamepad/digital", 10);
+    d->analog1P = nh->advertise< JsEvent >("gamepad/analog1", 100);
+    d->analog2P = nh->advertise< JsEvent >("gamepad/analog2", 100);
+    d->digitalP = nh->advertise< JsEvent >("gamepad/digital", 50);
     d->buttonsP = nh->advertise< JsEvent >("gamepad/buttons", 20);
-    d->triggersP = nh->advertise< JsEvent >("gamepad/triggers", 50);
+    d->triggersP = nh->advertise< JsEvent >("gamepad/triggers", 100);
 }
 
 GamepadController::~GamepadController()

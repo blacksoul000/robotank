@@ -1,4 +1,4 @@
 bool bySpeed
 int8 deviceId
-float32 x
-float32 y
+int16 x
+int16 y

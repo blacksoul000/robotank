@@ -4,7 +4,7 @@
 
 namespace
 {
-    const int fps = 100;
+    const int fps = 10;
 }
 
 int main(int argc, char** argv)
