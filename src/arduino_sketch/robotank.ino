@@ -124,7 +124,7 @@ void setup() {
 void loop()
 {
   ms = millis();
-  if ((ms - ms1) > 100 || ms < ms1 )
+  if ((ms - ms1) > 1000 || ms < ms1 )
   {
        ms1 = ms;
        sendData();
@@ -217,7 +217,7 @@ void sendData()
   pkg.y = ypr[1] * 180 / M_PI / (360.0 / 32768); //* 180 / M_PI / (360 / 32768);
 //  pkg.y = camera.read() / (360.0 / 32768);
 
-  Serial.write(prefix.c_str(), sizeof(prefix));
+  Serial.write(prefix.c_str(), prefix.length());
   Serial.write(reinterpret_cast< const unsigned char* >(&pkg), sizeof(pkg));
 }
 

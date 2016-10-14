@@ -3,6 +3,16 @@
 Rpi:
 * Enable i2c and camera in raspi-config
 
+* Disable serial console.
+  In file /boot/cmdline.txt remove options referring to the serial port options referring to the serial port.
+  So, this
+    dwc_otg.lpm_enable=0 console=ttyAMA0,115200 kgdboc=ttyAMA0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline rootwait
+  becomes this
+    dwc_otg.lpm_enable=0 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline rootwait
+
+  And disable service: sudo systemctl disable serial-getty@ttyAMA0.service
+  Reboot.
+
 * Speedupt i2c interface and make it permanent
   sudo bash -c "echo options i2c_bcm2708 baudrate=400000 > /etc/modprobe.d/i2c.conf"
 

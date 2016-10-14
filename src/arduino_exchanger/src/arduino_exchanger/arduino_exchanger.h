@@ -13,7 +13,7 @@ namespace arduino
     class ArduinoExchanger
     {
     public:
-        ArduinoExchanger(ros::NodeHandle* nh, const std::string& path, int address);
+        ArduinoExchanger(ros::NodeHandle* nh, const std::string& path);
         ~ArduinoExchanger();
 
         void process();

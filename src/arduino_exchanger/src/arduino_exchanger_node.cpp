@@ -4,9 +4,8 @@
 
 namespace
 {
-    const std::string path = "/dev/i2c-1";
+    const std::string path = "/dev/ttyAMA0";
     const int fps = 100;
-    const int arduinoAddress = 0x4;
 }
 
 int main(int argc, char** argv)
@@ -14,7 +13,7 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "arduino_exchanger");
     ros::NodeHandle nh;
 
-    arduino::ArduinoExchanger controller(&nh, ::path, ::arduinoAddress);
+    arduino::ArduinoExchanger controller(&nh, ::path);
     ros::Rate loop_rate(fps);
     while (nh.ok())
     {
