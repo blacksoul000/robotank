@@ -279,3 +279,4 @@ class I2Cdev {
 #endif // I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_NBWIRE
 
 #endif /* _I2CDEV_H_ */
+
