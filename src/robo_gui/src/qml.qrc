@@ -8,5 +8,11 @@
         <file>qml/RButton.qml</file>
         <file>qml/Crosshair.qml</file>
         <file>qml/CaptureArea.qml</file>
+        <file>qml/StatusPanel.qml</file>
+        <file>qml/StatusIndicator.qml</file>
+        <file>qml/Battery.qml</file>
+        <file>qml/DigitalClock.qml</file>
+        <file>qml/BatteryIndicator.qml</file>
+        <file>qml/ChassisScheme.qml</file>
     </qresource>
 </RCC>

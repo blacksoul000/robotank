@@ -15,7 +15,7 @@ namespace domain
         RoboModel();
         ~RoboModel();
         SightModel* sight() const;
-//        StatusModel* status() const;
+        StatusModel* status() const;
         TrackModel* track() const;
         SettingsModel* settings() const;
 

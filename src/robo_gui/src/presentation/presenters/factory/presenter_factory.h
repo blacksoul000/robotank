@@ -21,6 +21,7 @@ namespace presentation
         QObject* framePresenter();
         QObject* trackPresenter();
         QObject* settingsPresenter();
+        QObject* statusPresenter();
 
     private:
         class Impl;

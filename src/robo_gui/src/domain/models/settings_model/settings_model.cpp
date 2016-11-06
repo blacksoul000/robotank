@@ -8,6 +8,8 @@ class SettingsModel::Impl
 {
 public:
     int quality = -1;
+    int brightness = -1;
+    int contrast = -1;
     int tracker = -1;
 };
 
@@ -46,4 +48,26 @@ int SettingsModel::tracker() const
     return d->tracker;
 }
 
+void SettingsModel::setBrightness(int brightness)
+{
+    if (d->brightness == brightness) return;
+    d->brightness = brightness;
+    emit brightnessChanged(brightness);
+}
 
+int SettingsModel::brightness() const
+{
+    return d->brightness;
+}
+
+void SettingsModel::setContrast(int contrast)
+{
+    if (d->contrast == contrast) return;
+    d->contrast = contrast;
+    emit contrastChanged(contrast);
+}
+
+int SettingsModel::contrast() const
+{
+    return d->contrast;
+}

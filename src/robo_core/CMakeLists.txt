@@ -50,6 +50,7 @@ add_message_files(
    FILES
    Influence.msg
    PointF.msg
+   Point3D.msg
 )
 
 ## Generate services in the 'srv' folder

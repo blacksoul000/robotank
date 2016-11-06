@@ -4,12 +4,14 @@
 #include "frame_presenter.h"
 #include "track_presenter.h"
 #include "settings_presenter.h"
+#include "status_presenter.h"
 
 #include <QtQml>
 
 using presentation::PresenterFactory;
 using presentation::FramePresenter;
 using presentation::SettingsPresenter;
+using presentation::StatusPresenter;
 
 class PresenterFactory::Impl
 {
@@ -42,4 +44,9 @@ QObject* PresenterFactory::trackPresenter()
 QObject* PresenterFactory::settingsPresenter()
 {
     return new SettingsPresenter(d->model, this);
+}
+
+QObject* PresenterFactory::statusPresenter()
+{
+    return new StatusPresenter(d->model, this);
 }

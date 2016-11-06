@@ -7,6 +7,7 @@ Item {
 
     property QtObject framePresenter: factory.framePresenter()
     property QtObject trackPresenter: factory.trackPresenter()
+    property QtObject statusPresenter: factory.statusPresenter()
     property double scaleX: video.sourceRect.width / page.width
     property double scaleY: video.sourceRect.height / page.height
 
@@ -82,9 +83,23 @@ Item {
         }
     }
 
+    StatusPanel {
+        id: panel
+        width: parent.width
+        presenter: statusPresenter
+    }
+
+    ChassisScheme {
+        id: scheme
+        anchors.bottom: parent.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
+        yaw: statusPresenter.yaw
+        azimuth: statusPresenter.gunPositionH
+    }
+
     RButton {
         anchors.right: parent.right
-        anchors.top: parent.top
+        anchors.bottom: parent.bottom
         anchors.margins: 5
 
         imageSource: "qrc:/icons/settings.svg"
@@ -107,6 +122,7 @@ Item {
         }
     }
 
+    // convert screen coordinates to image
     function screenToImage(rect) {
         rect.x *= page.scaleX
         rect.y *= page.scaleY

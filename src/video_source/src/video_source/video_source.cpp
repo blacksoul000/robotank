@@ -8,6 +8,7 @@
 //msgs
 #include "std_msgs/UInt8.h"
 #include "video_source/PointF.h"
+#include "video_source/ImageSettings.h"
 
 #ifdef PICAM
 #include <raspicam/raspicam_cv.h>
@@ -18,6 +19,8 @@ using video::VideoSource;
 namespace
 {
     const int defaultQuality = 15;
+    const int defaultBrightness = 75;
+    const int defaultContrast = 95;
     const int width = 640;
     const int height = 480;
 
@@ -43,18 +46,22 @@ public:
     volatile bool stop = false;
     image_transport::Publisher imagePublisher;
     ros::Publisher dotsPerDegreePublisher;
-    ros::Subscriber imageQualitySub;
+    ros::Subscriber imageSettingsSub;
 
-    void onQualityChangeRequest(const std_msgs::UInt8& msg);
-    void onQualityChangeRequestImpl(int quality);
+    void onChangeImageSettingsRequest(const video_source::ImageSettings& msg);
+    void setQuality(int quality);
+    void setBrightness(int brightness);
+    void setContrast(int contrast);
 };
 
-void VideoSource::Impl::onQualityChangeRequest(const std_msgs::UInt8& msg)
+void VideoSource::Impl::onChangeImageSettingsRequest(const video_source::ImageSettings& msg)
 {
-    this->onQualityChangeRequestImpl(msg.data);
+    this->setQuality(msg.quality);
+    this->setBrightness(msg.brightness);
+    this->setContrast(msg.contrast);
 }
 
-void VideoSource::Impl::onQualityChangeRequestImpl(int quality)
+void VideoSource::Impl::setQuality(int quality)
 {
 //    rosrun dynamic_reconfigure dynparam set -t1 /camera/image/compressed jpeg_quality 15
     std::string s = "rosrun dynamic_reconfigure dynparam set -t1 "
@@ -63,6 +70,16 @@ void VideoSource::Impl::onQualityChangeRequestImpl(int quality)
     FILE* f = popen(s.c_str(), "r");
     pclose(f);
     // system(s.c_str()); does not work by unknown reason
+}
+
+void VideoSource::Impl::setBrightness(int brightness)
+{
+    capturer.set(CV_CAP_PROP_BRIGHTNESS, brightness);
+}
+
+void VideoSource::Impl::setContrast(int contrast)
+{
+    capturer.set(CV_CAP_PROP_CONTRAST, contrast);
 }
 
 //----------------------------------------------------------------------------
@@ -74,8 +91,8 @@ VideoSource::VideoSource(ros::NodeHandle* nh, int fps) :
     image_transport::ImageTransport it(*nh);
     d->imagePublisher = it.advertise("camera/image", 1);
     d->dotsPerDegreePublisher = nh->advertise< video_source::PointF >("camera/dotsPerDegree", 1);
-    d->imageQualitySub = nh->subscribe("camera/image/quality", 0,
-                                       &VideoSource::Impl::onQualityChangeRequest, d);
+    d->imageSettingsSub = nh->subscribe("camera/image/settings", 1,
+                                       &VideoSource::Impl::onChangeImageSettingsRequest, d);
 }
 
 VideoSource::~VideoSource()
@@ -92,8 +109,8 @@ void VideoSource::start(int cameraNumber)
     d->capturer.set(CV_CAP_PROP_FORMAT, CV_8UC3);
     d->capturer.set(CV_CAP_PROP_FRAME_HEIGHT, ::height);
     d->capturer.set(CV_CAP_PROP_FRAME_WIDTH, ::width);
-    d->capturer.set(CV_CAP_PROP_BRIGHTNESS, 75);
-    d->capturer.set(CV_CAP_PROP_CONTRAST, 95);
+//    d->capturer.set(CV_CAP_PROP_BRIGHTNESS, 75);
+//    d->capturer.set(CV_CAP_PROP_CONTRAST, 95);
 
     if(!d->capturer.open())
 #else
@@ -107,7 +124,15 @@ void VideoSource::start(int cameraNumber)
     }
     int quality = 0;
     ros::param::param< int >("camera/image/quality", quality, ::defaultQuality);
-    d->onQualityChangeRequestImpl(quality);
+    d->setQuality(quality);
+
+    int brightness = 0;
+    ros::param::param< int >("camera/image/brightness", brightness, ::defaultBrightness);
+    d->setBrightness(brightness);
+
+    int contrast = 0;
+    ros::param::param< int >("camera/image/brightness", contrast, ::defaultContrast);
+    d->setContrast(contrast);
 
     video_source::PointF msg;
     msg.x = ::width / ::fieldOfViewH;

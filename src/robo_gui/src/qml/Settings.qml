@@ -1,8 +1,11 @@
 import QtQuick 2.0
 import QtQuick.Controls 1.4
+import QtQuick.Layouts 1.1
+import QtQuick.Controls.Styles 1.4
 
-Item {
+Rectangle {
     id: root
+    color: "green"
 
     Text {
         id: label
@@ -15,33 +18,33 @@ Item {
     property QtObject presenter: factory.settingsPresenter()
 
     ListModel {
-        id: trackers
+        id: trackersModel
         ListElement {
-            text: "Camshift"
+            name: "Camshift"
             code: 1
         }
         ListElement {
-            text: "MedianFlow"
+            name: "MedianFlow"
             code: 2
         }
         ListElement {
-            text: "Boosting"
+            name: "Boosting"
             code: 3
         }
         ListElement {
-            text: "Mil"
+            name: "Mil"
             code: 4
         }
         ListElement {
-            text: "Tld"
+            name: "Tld"
             code: 5
         }
         ListElement {
-            text: "CustomTld"
+            name: "CustomTld"
             code: 6
         }
         ListElement {
-            text: "OpenTld"
+            name: "OpenTld"
             code: 7
         }
     }
@@ -51,70 +54,207 @@ Item {
     Component {
         id: trackerDelegate
         Item {
-            property bool even: (index % 2)
-            property var item: trackers.get(index / 2)
+            width: parent.width / 2
+            height: 20
+            Row {
+                anchors.fill: parent
+                spacing: 10
+                Rectangle {
+                    id: box
+                    width: 20
+                    height: 20
 
-            width: even ? label.width : button.width
-            height: even ? label.height : button.height
-            Text {
-                id: label
-                visible: !even
-                color: roboPalette.textColor
-                font.pixelSize: roboPalette.textSize
-                anchors.verticalCenter: parent.verticalCenter
-                text: item.text
-            }
-            RButton {
-                id: button
-                visible: even
-                imageSource: checked ? "qrc:/icons/ok.svg" : "qrc:/icons/cancel.svg"
-                checkable: true
-                exclusiveGroup: selectedTracker
+                    anchors.verticalCenter: parent.verticalCenter
 
-                onClicked: {
-                    presenter.trackerCode = item.code
+                    property bool checked: presenter.trackerCode === code
+
+                    border.color: "white"
+                    Image {
+                        anchors.fill: parent
+                        source: "qrc:/icons/ok.svg"
+                        visible: box.checked
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            if (box.checked) return;
+                            presenter.trackerCode = code
+                        }
+                    }
                 }
-
-                Component.onCompleted: {
-                    presenter.trackerCodeChanged.connect(onPresenterTracerCodeChanged)
-                    onPresenterTracerCodeChanged(presenter.trackerCode)
-                }
-
-                function onPresenterTracerCodeChanged(trackerCode) {
-                    if (trackerCode === item.code) selectedTracker.current = button
+                Text {
+                    id: label
+                    color: roboPalette.textColor
+                    font.pixelSize: roboPalette.textSize
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: name
                 }
             }
         }
     }
 
-    Grid {
-        id: grid
-        anchors.top: label.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.topMargin: 20
-        columns: 2
-        spacing: 10
-        Text {
-            id: txt
-            color: roboPalette.textColor
-            font.pixelSize: roboPalette.textSize
-            text: "Video quality"
+    GroupBox {
+        id: sliders
+        title: "Video"
+        width: parent.width
+
+        anchors {
+            top: label.bottom
+            left: parent.left
+            right: parent.right
+            leftMargin: 5
+            rightMargin: 5
+            topMargin: 20
         }
 
-        Slider {
-            maximumValue: 100
-            width: 200
-            height: txt.height
-            stepSize: 1
-            value: presenter.quality
-            updateValueWhileDragging: false
-            onValueChanged: presenter.quality = value
+        RowLayout {
+            anchors.fill: parent
 
-            Component.onCompleted: minimumValue = 1; // set value from presenter first
+            spacing: 10
+
+            Column {
+                spacing: 10
+                Text {
+                    id: qualityLabel
+                    color: roboPalette.textColor
+                    font.pixelSize: roboPalette.textSize
+                    text: "Quality"
+                }
+                Text {
+                    id: brightnessLabel
+                    color: roboPalette.textColor
+                    font.pixelSize: roboPalette.textSize
+                    text: "Brightness"
+                }
+                Text {
+                    id: contrastLabel
+                    color: roboPalette.textColor
+                    font.pixelSize: roboPalette.textSize
+                    text: "Contrast"
+                }
+            }
+            Column {
+                spacing: 10
+                Layout.fillWidth: true
+                Slider {
+                    maximumValue: 100
+                    width: parent.width
+                    height: qualityLabel.height
+                    stepSize: 1
+                    value: presenter.quality
+                    updateValueWhileDragging: false
+                    onValueChanged: presenter.quality = value
+
+                    Component.onCompleted: minimumValue = 1; // set value from presenter first
+                }
+                Slider {
+                    maximumValue: 100
+                    width: parent.width
+                    height: brightnessLabel.height
+                    stepSize: 1
+                    value: presenter.brightness
+                    updateValueWhileDragging: false
+                    onValueChanged: presenter.brightness = value
+
+                    Component.onCompleted: minimumValue = 1; // set value from presenter first
+                }
+                Slider {
+                    maximumValue: 100
+                    width: parent.width
+                    height: contrastLabel.height
+                    stepSize: 1
+                    value: presenter.contrast
+                    updateValueWhileDragging: false
+                    onValueChanged: presenter.contrast = value
+
+                    Component.onCompleted: minimumValue = 1; // set value from presenter first
+                }
+            }
+            Column {
+                spacing: 10
+                Text {
+                    color: roboPalette.textColor
+                    font.pixelSize: roboPalette.textSize
+                    text: "" + presenter.quality
+                }
+                Text {
+                    color: roboPalette.textColor
+                    font.pixelSize: roboPalette.textSize
+                    text: "" + presenter.brightness
+                }
+                Text {
+                    color: roboPalette.textColor
+                    font.pixelSize: roboPalette.textSize
+                    text: "" + presenter.contrast
+                }
+            }
         }
-        Repeater {
-            model: trackers.count * 2
-            delegate: trackerDelegate
+    }
+
+    GroupBox {
+        title: "Trackers"
+        width: parent.width
+        id: trackers
+
+        anchors {
+            top: sliders.bottom
+            left: parent.left
+            right: parent.right
+            leftMargin: 5
+            rightMargin: 5
+            topMargin: 10
+        }
+
+        Grid {
+            anchors.fill: parent
+
+            columns: 2
+            spacing: 10
+
+            Repeater {
+                model: trackersModel
+                delegate: trackerDelegate
+            }
+        }
+    }
+
+    GroupBox {
+        title: "Sensors calibrtion"
+        width: parent.width
+
+        anchors {
+            top: trackers.bottom
+            left: parent.left
+            right: parent.right
+            leftMargin: 5
+            rightMargin: 5
+            topMargin: 10
+        }
+
+        Grid {
+            anchors.fill: parent
+
+            spacing: 10
+
+            Button {
+                text: "Gun"
+                onClicked: {
+                    presenter.calibrateGun()
+                }
+            }
+            Button {
+                text: "Camera"
+                onClicked: {
+                    presenter.calibrateCameraV()
+                }
+            }
+            Button {
+                text: "Gyro"
+                onClicked: {
+                    presenter.calibrateGyro()
+                }
+            }
         }
     }
 }

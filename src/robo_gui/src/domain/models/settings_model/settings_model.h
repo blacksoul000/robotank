@@ -18,9 +18,21 @@ namespace domain
         void setTracker(int tracker);
         int tracker() const;
 
+        void setBrightness(int brightness);
+        int brightness() const;
+
+        void setContrast(int contrast);
+        int contrast() const;
+
     signals:
         void qualityChanged(int quality);
+        void brightnessChanged(int brightness);
+        void contrastChanged(int contrast);
         void trackerChanged(int tracker);
+
+        void calibrateGun();
+        void calibrateCamera();
+        void calibrateGyro();
 
     private:
         class Impl;

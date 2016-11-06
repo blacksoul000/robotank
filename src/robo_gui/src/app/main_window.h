@@ -31,8 +31,13 @@ namespace robo
 
     private slots:
         void onTrackRequest(const QRectF& rect);
-        void onChangeVideoQuality(int quality);
+        void onImageSettingsChanged();
         void onChangeTracker(int tracker);
+
+        void onCalibrateGun();
+        void onCalibrateCamera();
+        void onCalibrateGyro();
+
         void onImageTimeout();
 
         void onNewFrame(const sensor_msgs::ImageConstPtr& msg);
