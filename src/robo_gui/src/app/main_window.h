@@ -5,6 +5,8 @@
 
 #include <QObject>
 
+class QSettings;
+
 namespace ros
 {
     class NodeHandle;
@@ -16,7 +18,7 @@ namespace robo
     {
         Q_OBJECT
     public:
-        MainWindow(ros::NodeHandle* nh, QObject* parent = nullptr);
+        MainWindow(ros::NodeHandle* nh, QSettings* settings, QObject* parent = nullptr);
         ~MainWindow();
 
         void loadSettings();

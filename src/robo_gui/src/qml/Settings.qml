@@ -3,9 +3,8 @@ import QtQuick.Controls 1.4
 import QtQuick.Layouts 1.1
 import QtQuick.Controls.Styles 1.4
 
-Rectangle {
+Item {
     id: root
-    color: "green"
 
     Text {
         id: label
@@ -246,7 +245,7 @@ Rectangle {
             Button {
                 text: "Camera"
                 onClicked: {
-                    presenter.calibrateCameraV()
+                    presenter.calibrateCamera()
                 }
             }
             Button {

@@ -14,5 +14,6 @@
         <file>qml/DigitalClock.qml</file>
         <file>qml/BatteryIndicator.qml</file>
         <file>qml/ChassisScheme.qml</file>
+        <file>qml/MasterStatus.qml</file>
     </qresource>
 </RCC>

@@ -94,7 +94,7 @@ void SettingsPresenter::onModelBrightnessChanged(int brightness)
 {
     if (d->brightness == brightness) return;
     d->brightness = brightness;
-    emit qualityChanged(brightness);
+    emit brightnessChanged(brightness);
 }
 
 void SettingsPresenter::onModelContrastChanged(int contrast)

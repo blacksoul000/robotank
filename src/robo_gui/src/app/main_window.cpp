@@ -34,7 +34,6 @@
 #include <QSettings>
 #include <QTimer>
 #include <QDebug>
-#include <QScopedPointer>
 
 #ifdef ANDROID
 #include <QtAndroid>
@@ -45,7 +44,6 @@ using robo::MainWindow;
 
 namespace
 {
-    const QString settingsFileName = "robotank.cfg";
     const QString qualityId = "quality";
     const QString brightnessId = "brightness";
     const QString contrastId = "contrast";
@@ -100,10 +98,11 @@ public:
     void onYawPitchRollChanged(const robo_core::Point3D& ypr);
 };
 
-MainWindow::MainWindow(ros::NodeHandle* nh, QObject* parent) :
+MainWindow::MainWindow(ros::NodeHandle* nh, QSettings *settings, QObject* parent) :
     QObject(parent),
     d(new Impl)
 {
+    d->settings = settings;
     d->model = new domain::RoboModel;
     d->viewer = new QQuickView;
     d->viewer->rootContext()->setContextProperty("factory",
@@ -168,8 +167,6 @@ MainWindow::MainWindow(ros::NodeHandle* nh, QObject* parent) :
 MainWindow::~MainWindow()
 {
     d->imageTimer.stop();
-    d->settings->sync();
-    delete d->settings;
     delete d->viewer;
     delete d->model;
     delete d;
@@ -257,14 +254,14 @@ void MainWindow::onChangeTracker(int tracker)
 
 void MainWindow::loadSettings()
 {
-    if (d->settings) return;
-    d->settings = new QSettings(::settingsFileName, QSettings::NativeFormat);
-
-    d->model->settings()->setQuality(d->settings->value(::qualityId, ::defaultQuality).toInt());
-    d->model->settings()->setBrightness(
-                d->settings->value(::brightnessId, ::defaultBrightness).toInt());
-    d->model->settings()->setContrast(d->settings->value(::contrastId, ::defaultContrast).toInt());
-    d->model->settings()->setTracker(d->settings->value(::trackerId, ::defaultTracker).toInt());
+    const int quality = d->settings->value(::qualityId, ::defaultQuality).toInt();
+    const int brightness = d->settings->value(::brightnessId, ::defaultBrightness).toInt();
+    const int contrast = d->settings->value(::contrastId, ::defaultContrast).toInt();
+    const int traker = d->settings->value(::trackerId, ::defaultTracker).toInt();
+    d->model->settings()->setQuality(quality);
+    d->model->settings()->setBrightness(brightness);
+    d->model->settings()->setContrast(contrast);
+    d->model->settings()->setTracker(traker);
 }
 
 void MainWindow::onImageTimeout()
