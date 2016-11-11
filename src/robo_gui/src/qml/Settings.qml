@@ -219,7 +219,7 @@ Item {
     }
 
     GroupBox {
-        title: "Sensors calibrtion"
+        title: "Sensors calibration"
         width: parent.width
 
         anchors {

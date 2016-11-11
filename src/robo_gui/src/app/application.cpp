@@ -64,18 +64,17 @@ void Application::start()
 
 void Application::onConnected()
 {
-    // This is need to correct run on Android
+    const QString masterIp = d->checker->ip();
+    const QString subnet = masterIp.left(masterIp.lastIndexOf('.'));
     QHostAddress selfIp;
     foreach (const auto& address, QNetworkInterface::allAddresses())
     {
-        if (address.protocol() == QAbstractSocket::IPv4Protocol
-                && address != QHostAddress::LocalHost)
-             selfIp = address;
+        if (address.toString().startsWith(subnet)) selfIp = address;
     }
 
     std::string appNameString = QCoreApplication::applicationFilePath().toStdString();
     std::string selfIpString = "__ip:=" + selfIp.toString().toStdString();
-    std::string masterIpString = "__master:=http://" + d->checker->ip().toStdString() + ":11311";
+    std::string masterIpString = "__master:=http://" + masterIp.toStdString() + ":11311";
     d->checker.reset();
 
     char s0[appNameString.length() + 1];
@@ -86,7 +85,6 @@ void Application::onConnected()
     strcpy(s2, selfIpString.c_str());
     char* argv[] = {s0, s1, s2};
     d->argv = argv;
-    // android stuff end
 
     ros::init(d->argc, d->argv, "robo_gui_node");
     d->nh = new ros::NodeHandle();
