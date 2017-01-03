@@ -4,6 +4,9 @@
 
 #include "MPU6050_6Axis_MotionApps20.h"
 
+//#define ENABLE_GYRO
+#define ENABLE_SERVO
+
 // chassis engines
 const int8_t boardL1 = 8;
 const int8_t boardL2 = 7;
@@ -82,9 +85,12 @@ void setup() {
   digitalWrite(towerPwm, 0);
 
   // Servo
+#ifdef ENABLE_SERVO
   gun.attach(gunPwm);
   camera.attach(cameraPwm);
-
+#endif
+  
+#ifdef ENABLE_GYRO
   mpu[0].initialize();
   mpu[1].initialize();
 
@@ -109,7 +115,11 @@ void setup() {
   // Serial.println(F("Enabling interrupt detection (Arduino external interrupt)..."));
   attachInterrupt(digitalPinToInterrupt(2), dmpDataReady0, RISING);
   attachInterrupt(digitalPinToInterrupt(3), dmpDataReady1, RISING);
+#endif
 
+  pinMode(13, OUTPUT);
+  digitalWrite(13, HIGH);
+  
 //  Serial.println("Ready!");
 }
 
@@ -244,6 +254,7 @@ void sendData()
 
 void serialEvent()
 {
+      
   while (Serial.available())
   {
     buf += (char)Serial.read();
@@ -273,14 +284,16 @@ void serialEvent()
     RpiPkg pkg = *reinterpret_cast< const RpiPkg* >(buf.c_str() + prefix.length());
     waitPrefix = true;
     buf.remove(0, packetSize);
+    mpuData[0].ypr[0] = pkg.x;
+    mpuData[0].ypr[1] = pkg.y;
 
     if (pkg.deviceId == 0) // chassis
     {
       float speed = 1.0 * pkg.y / maxDeviation * 255;
       float turnSpeed = 1.0 * pkg.x / maxDeviation * 255;
   
-      applySpeed(speed + turnSpeed, boardL1, boardL2, boardPwmL);
-      applySpeed(speed - turnSpeed, boardR1, boardR2, boardPwmR);
+      applySpeed(speed - turnSpeed, boardL1, boardL2, boardPwmL);
+      applySpeed(speed + turnSpeed, boardR1, boardR2, boardPwmR);
     } else if (pkg.deviceId == 1)
     {
       float speedX = 1.0 * pkg.x / maxDeviation * 255;
@@ -311,13 +324,21 @@ void loop()
 
     sendData();
   }
+
   if ((ms - ms2) > 30 || ms < ms2 )
   {
     ms2 = ms;
+#ifdef ENABLE_GYRO
     processAccelGyro(0);
     processAccelGyro(1);
+#endif
+
+#ifdef ENABLE_SERVO
     gun.write(gun.read() - gunSpeed);
+    camera.write(camera.read() - gunSpeed);
+#endif    
   }
+
 
 //  delay(25);
 }
