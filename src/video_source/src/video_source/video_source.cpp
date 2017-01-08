@@ -67,9 +67,9 @@ void VideoSource::Impl::setQuality(int quality)
     std::string s = "rosrun dynamic_reconfigure dynparam set -t1 "
                     "/camera/image/compressed jpeg_quality "
             + std::to_string(quality);
-    FILE* f = popen(s.c_str(), "r");
-    pclose(f);
-    // system(s.c_str()); does not work by unknown reason
+    popen(s.c_str(), "r");
+//    FILE* f = popen(s.c_str(), "r");
+//    pclose(f);
 }
 
 void VideoSource::Impl::setBrightness(int brightness)
@@ -109,8 +109,6 @@ void VideoSource::start(int cameraNumber)
     d->capturer.set(CV_CAP_PROP_FORMAT, CV_8UC3);
     d->capturer.set(CV_CAP_PROP_FRAME_HEIGHT, ::height);
     d->capturer.set(CV_CAP_PROP_FRAME_WIDTH, ::width);
-//    d->capturer.set(CV_CAP_PROP_BRIGHTNESS, 75);
-//    d->capturer.set(CV_CAP_PROP_CONTRAST, 95);
 
     if(!d->capturer.open())
 #else
@@ -122,16 +120,13 @@ void VideoSource::start(int cameraNumber)
         ROS_WARN("Failed to open camera");
         return;
     }
-    int quality = 0;
-    ros::param::param< int >("camera/image/quality", quality, ::defaultQuality);
-    d->setQuality(quality);
 
     int brightness = 0;
-    ros::param::param< int >("camera/image/brightness", brightness, ::defaultBrightness);
+    ros::param::param< int >("/camera/image/brightness", brightness, ::defaultBrightness);
     d->setBrightness(brightness);
 
     int contrast = 0;
-    ros::param::param< int >("camera/image/brightness", contrast, ::defaultContrast);
+    ros::param::param< int >("/camera/image/contrast", contrast, ::defaultContrast);
     d->setContrast(contrast);
 
     video_source::PointF msg;
