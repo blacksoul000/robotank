@@ -1,16 +1,16 @@
-#include <Wire.h>
 #include <Servo.h>
+#include <Wire.h>
 #include "I2Cdev.h"
 
 #include "MPU6050_6Axis_MotionApps20.h"
 
 //#define ENABLE_GYRO
-#define ENABLE_SERVO
+//#define ENABLE_SERVO
 
 // chassis engines
 const int8_t boardL1 = 8;
 const int8_t boardL2 = 7;
-const int8_t boardPwmL = 9;
+const int8_t boardPwmL = 11;
 const int8_t boardR1 = 5;
 const int8_t boardR2 = 4;
 const int8_t boardPwmR = 6;
@@ -20,6 +20,7 @@ const int8_t towerPwm = 10;
 
 const int8_t gunPwm = 17;
 const int8_t cameraPwm = 16;
+const int8_t shotPwm = 9;
 
 // mpu
 struct MpuData
@@ -35,16 +36,19 @@ struct MpuData
     float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
 };
 
-const int16_t maxDeviation = 32767;
-const double positionCoef = (360.0 / 32767);
+const double velocityCoef = 32767.0 / 255;
+const double positionCoef = 360.0 / 32767;
 
 struct RpiPkg
 {
-  int8_t bySpeed : 1;
-  int8_t deviceId : 4;
-  int8_t reserve : 3;
-  int16_t x = 0;
-  int16_t y = 0;
+    uint8_t angleType:3;
+    uint8_t shot:1;
+    uint8_t reserve:4;
+    int16_t gunV = 0;
+    int16_t cameraV = 0;
+    int16_t leftEngine = 0;
+    int16_t rightEngine = 0;
+    int16_t towerH = 0;
 };
 
 Servo gun;
@@ -83,7 +87,11 @@ void setup() {
   pinMode(tower2, OUTPUT);
   pinMode(towerPwm, OUTPUT);
   digitalWrite(towerPwm, 0);
-
+  
+  // Shot
+  pinMode(shotPwm, OUTPUT);
+  digitalWrite(shotPwm, 0);
+  
   // Servo
 #ifdef ENABLE_SERVO
   gun.attach(gunPwm);
@@ -213,9 +221,6 @@ void processAccelGyro(uint8_t index)
 void applySpeed(int16_t speed, int8_t pin1, int8_t pin2, int8_t pinPwm)
 {
   int16_t absSpeed = abs(speed);
-  //  Serial.print(speed);
-  //  Serial.print(" | ");
-  //  Serial.println(pinPwm);
   analogWrite(pinPwm, absSpeed > 255 ? 255 : absSpeed);
   if (speed > 0)
   {
@@ -244,9 +249,9 @@ void sendData()
   pkg.gunX = mpuData[0].ypr[0] * 180 / M_PI / positionCoef;
   pkg.gunY = gun.read() / positionCoef;
   pkg.cameraY = camera.read() / positionCoef;
-  pkg.yaw = mpuData[1].ypr[0] * 180 / M_PI / positionCoef;
-  pkg.pitch = -mpuData[1].ypr[2] * 180 / M_PI / positionCoef; //bcoz sensor attitude pitch and roll swapped and pitch inverted
-  pkg.roll = mpuData[1].ypr[1] * 180 / M_PI / positionCoef;
+  pkg.yaw = mpuData[1].ypr[0] /** 180 / M_PI / positionCoef*/;
+  pkg.pitch = -mpuData[1].ypr[2] /** 180 / M_PI / positionCoef*/; //bcoz sensor attitude pitch and roll swapped and pitch inverted
+  pkg.roll = mpuData[1].ypr[1] /** 180 / M_PI / positionCoef*/;
 
   Serial.write(prefix.c_str(), prefix.length());
   Serial.write(reinterpret_cast< const unsigned char* >(&pkg), sizeof(pkg));
@@ -284,34 +289,27 @@ void serialEvent()
     RpiPkg pkg = *reinterpret_cast< const RpiPkg* >(buf.c_str() + prefix.length());
     waitPrefix = true;
     buf.remove(0, packetSize);
-    mpuData[0].ypr[0] = pkg.x;
-    mpuData[0].ypr[1] = pkg.y;
+    
+//    mpuData[1].ypr[0] = pkg.leftEngine / velocityCoef;
+//    mpuData[1].ypr[1] = pkg.gunV;
+//    mpuData[1].ypr[2] = -pkg.rightEngine / velocityCoef;
+    digitalWrite(shotPwm, pkg.shot);
+    applySpeed(pkg.leftEngine / velocityCoef, boardL1, boardL2, boardPwmL);
+    applySpeed(pkg.rightEngine / velocityCoef, boardR1, boardR2, boardPwmR);
+    applySpeed(pkg.towerH / velocityCoef, tower1, tower2, towerPwm);
 
-    if (pkg.deviceId == 0) // chassis
+#ifdef ENABLE_SERVO
+    if (pkg.angleType == 1) // position
     {
-      float speed = 1.0 * pkg.y / maxDeviation * 255;
-      float turnSpeed = 1.0 * pkg.x / maxDeviation * 255;
-  
-      applySpeed(speed - turnSpeed, boardL1, boardL2, boardPwmL);
-      applySpeed(speed + turnSpeed, boardR1, boardR2, boardPwmR);
-    } else if (pkg.deviceId == 1)
-    {
-      float speedX = 1.0 * pkg.x / maxDeviation * 255;
-      gunSpeed = 1.0 * pkg.y / maxDeviation * 3;
-      applySpeed(speedX, tower1, tower2, towerPwm);
+        gunSpeed = 0;
+        gun.write(gun.read() - pkg.gunV * (90.0 / 32767));
+        camera.write(camera.read() - pkg.cameraV * (90.0 / 32767));
     }
-
-    //  int y = 1.0 * pkg.y / maxDeviation * 255;
-    //  applySpeed(y, boardL1, boardL2, boardPwmL);
-    //  applySpeed(y, boardR1, boardR2, boardPwmR);
-//    Serial.println("");
-//    Serial.print(pkg.bySpeed);
-//    Serial.print(" | did=");
-//    Serial.print(pkg.deviceId);
-//    Serial.print(" | x=");
-//    Serial.print(pkg.x);
-//    Serial.print(" | y=");
-//    Serial.println(pkg.y);
+    else
+    {
+        gunSpeed = 1.0 * pkg.gunV / 32767 * 3;
+    }
+#endif
   }
 }
 
@@ -338,7 +336,4 @@ void loop()
     camera.write(camera.read() - gunSpeed);
 #endif    
   }
-
-
-//  delay(25);
 }

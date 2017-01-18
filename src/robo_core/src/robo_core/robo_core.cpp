@@ -1,11 +1,11 @@
 #include "robo_core.h"
 
 //msgs
-#include "gamepad_controller/JsEvent.h"
 #include "tracker/PointF.h"
 #include "video_source/PointF.h"
 #include "std_msgs/UInt8.h"
 #include "robo_core/Influence.h"
+#include "robo_core/PointF.h"
 #include <sensor_msgs/Joy.h>
 
 //ros
@@ -38,53 +38,61 @@ namespace
         X2 = 2,
         Y2 = 5
     };
+
+    template < class T >
+    inline T bound(T minValue, T value, T maxValue)
+    {
+        return std::min(std::max(value, minValue), maxValue);
+    }
 }
 
 class RoboCore::Impl
 {
 public:
     State state = State::Search;
-    robo_core::Influence influenceChassis;
-    robo_core::Influence influenceTower;
+    robo_core::Influence influence;
+    video_source::PointF dotsPerDegree;
+
+    short enginePowerLeft = SHRT_MAX;
+    short enginePowerRight = SHRT_MAX;
 
     ros::Publisher influenceP;
-    ros::Subscriber analog1S;
-    ros::Subscriber analog2S;
-    ros::Subscriber trackerS;
-    ros::Subscriber trackerStatusS;
-    ros::Subscriber dpdS;
-    ros::Subscriber joyS;
 
-    video_source::PointF dotsPerDegree;
-    void onChassisEvent(const gamepad_controller::JsEvent& event);
-    void onTowerEvent(const gamepad_controller::JsEvent& event);
+    std::list< ros::Subscriber > subscribers;
+
     void onTrackerStatusChanged(const std_msgs::UInt8& status);
     void onTrackerDeviation(const tracker::PointF& deviation);
     void onDotsPerDegreeChanged(const video_source::PointF& dpd);
+    void onEnginePowerChanged(const robo_core::PointF& enginePower);
     void onJoyEvent(const sensor_msgs::Joy::ConstPtr& joy);
+    void onFireStatusChanged(const std_msgs::UInt8& status);
 
     double smooth(double value, double maxInputValue, double maxOutputValue) const;
+    void setState(State state);
 };
 
 RoboCore::RoboCore(ros::NodeHandle* nh):
     d(new Impl)
 {
     d->influenceP = nh->advertise< robo_core::Influence >("core/influence", 10);
-    d->influenceChassis.bySpeed = true;
-    d->influenceChassis.deviceId = ::DeviceId::Chassis;
-    d->influenceTower.bySpeed = true;
-    d->influenceChassis.deviceId = ::DeviceId::Tower;
 
-    d->trackerStatusS = nh->subscribe("tracker/status", 1,
-                                      &RoboCore::Impl::onTrackerStatusChanged, d);
-    d->trackerS = nh->subscribe("tracker/deviation", 1, &RoboCore::Impl::onTrackerDeviation, d);
-    d->analog1S = nh->subscribe("gamepad/analog1", 100, &RoboCore::Impl::onChassisEvent, d);
-    d->analog2S = nh->subscribe("gamepad/analog2", 100, &RoboCore::Impl::onTowerEvent, d);
-    d->dpdS = nh->subscribe("camera/dotsPerDegree", 1, &RoboCore::Impl::onDotsPerDegreeChanged, d);
-    d->joyS = nh->subscribe<sensor_msgs::Joy>("joy", 10, &RoboCore::Impl::onJoyEvent, d);
+    d->subscribers.push_back(nh->subscribe("tracker/status", 1,
+                                           &RoboCore::Impl::onTrackerStatusChanged, d));
+    d->subscribers.push_back(nh->subscribe("tracker/deviation", 1,
+                                           &RoboCore::Impl::onTrackerDeviation, d));
+    d->subscribers.push_back(nh->subscribe("camera/dotsPerDegree", 1,
+                                           &RoboCore::Impl::onDotsPerDegreeChanged, d));
+    d->subscribers.push_back(nh->subscribe("joy", 10,
+                                           &RoboCore::Impl::onJoyEvent, d));
+    d->subscribers.push_back(nh->subscribe("core/enginePower", 1,
+                                           &RoboCore::Impl::onEnginePowerChanged, d));
+    d->subscribers.push_back(nh->subscribe("core/shot", 1,
+                                           &RoboCore::Impl::onFireStatusChanged, d));
 
     ros::param::param< float >("camera/dotsPerDegreeH", d->dotsPerDegree.x, ::defaultDotsPerDegree);
     ros::param::param< float >("camera/dotsPerDegreeV", d->dotsPerDegree.y, ::defaultDotsPerDegree);
+
+    d->setState(d->state);
 }
 
 RoboCore::~RoboCore()
@@ -95,80 +103,51 @@ RoboCore::~RoboCore()
 //------------------------------------------------------------------------------------
 void RoboCore::Impl::onJoyEvent(const sensor_msgs::Joy::ConstPtr& joy)
 {
-    short x1 = -this->smooth(joy->axes[Axes::X1], 1, SHRT_MAX);
-    short y1 = this->smooth(joy->axes[Axes::Y1], 1, SHRT_MAX);
-    short x2 = -this->smooth(joy->axes[Axes::X2], 1, SHRT_MAX);
-    short y2 = this->smooth(joy->axes[Axes::Y2], 1, SHRT_MAX);
-    if (influenceChassis.x != x1 || influenceChassis.y != y1)
+    if (state == State::Search)
     {
-        ROS_WARN("onJoyEvent chassis: %d %d", x1, y1);
-        influenceChassis.x = x1;
-        influenceChassis.y = y1;
-        influenceP.publish(influenceChassis);
+        short x = this->smooth(joy->axes[Axes::X2], 1, SHRT_MAX);
+        short y = this->smooth(joy->axes[Axes::Y2], 1, SHRT_MAX);
+        influence.gunV = influence.cameraV = y;
+        influence.towerH = x;
     }
-    if (influenceTower.x != x2 || influenceTower.y != y2)
+
+    const float speed = joy->axes[Axes::Y1];
+    const float turnSpeed = joy->axes[Axes::X1];
+
+    influence.leftEngine = this->smooth(::bound< float >(-1, speed - turnSpeed, 1), 1, enginePowerLeft);
+    influence.rightEngine = this->smooth(::bound< float >(-1, speed + turnSpeed, 1), 1, enginePowerRight);
+    influenceP.publish(influence);
+
+    if (state == State::Track)
     {
-        ROS_WARN("onJoyEvent tower: %d %d", x2, y2);
-        influenceTower.x = x2;
-        influenceTower.y = y2;
-        influenceP.publish(influenceTower);
+        influence.gunV = influence.cameraV = 0;
     }
-}
-
-void RoboCore::Impl::onChassisEvent(const gamepad_controller::JsEvent& event)
-{
-    ROS_WARN("onJsAnalog1: type = %d, number = %d, value = %d", event.type, event.number, event.value);
-
-    auto& inf = influenceChassis;
-    const double value = this->smooth(event.value, SHRT_MAX, SHRT_MAX);
-
-    switch (event.number)
-    {
-    case Axes::X1:
-        inf.x = value;
-        break;
-    case Axes::Y1:
-        inf.y = value;
-        break;
-    default:
-        return;
-    }
-    influenceP.publish(inf);
-}
-
-void RoboCore::Impl::onTowerEvent(const gamepad_controller::JsEvent& event)
-{
-    if (state != State::Search) return;
-    ROS_WARN("onJsAnalog2: type = %d, number = %d, value = %d", event.type, event.number, event.value);
-    auto& inf = influenceTower;
-    const double value = this->smooth(event.value, SHRT_MAX, SHRT_MAX);
-    switch (event.number)
-    {
-    case Axes::X2:
-        inf.x = value;
-        break;
-    case Axes::Y2:
-        inf.y = value;
-        break;
-    default:
-        return;
-    }
-    influenceP.publish(inf);
 }
 
 void RoboCore::Impl::onTrackerDeviation(const tracker::PointF& deviation)
 {
+    if (state != State::Track) return;
     ROS_WARN("onTrackerDeviation: x = %f, y = %f", deviation.x, deviation.y);
-    robo_core::Influence msg;
-    msg.bySpeed = false;
-    msg.x = (deviation.x / dotsPerDegree.x) / ::influenceCoef;
-    msg.y = (deviation.y / dotsPerDegree.y) / ::influenceCoef;
-    influenceP.publish(msg);
+    influence.towerH = (deviation.x / dotsPerDegree.x) / ::influenceCoef; // TODO PID
+    influence.gunV = influence.cameraV = (deviation.y / dotsPerDegree.y) / ::influenceCoef;
+    influenceP.publish(influence);
+}
+
+void RoboCore::Impl::onEnginePowerChanged(const robo_core::PointF& enginePower)
+{
+    ROS_WARN("onEnginePowerChanged n: x = %f, y = %f", enginePower.x, enginePower.y);
+    enginePowerLeft = enginePower.x * SHRT_MAX / 100.0;
+    enginePowerRight = enginePower.y * SHRT_MAX / 100.0;
 }
 
 void RoboCore::Impl::onTrackerStatusChanged(const std_msgs::UInt8& status)
 {
-    (status.data == 1) ? state = State::Track : State::Search;
+    this->setState((status.data == 1) ? State::Track : State::Search);
+}
+
+void RoboCore::Impl::onFireStatusChanged(const std_msgs::UInt8& status)
+{
+    influence.shot = status.data;
 }
 
 double RoboCore::Impl::smooth(double value, double maxInputValue, double maxOutputValue) const
@@ -179,4 +158,20 @@ double RoboCore::Impl::smooth(double value, double maxInputValue, double maxOutp
 void RoboCore::Impl::onDotsPerDegreeChanged(const video_source::PointF& dpd)
 {
     dotsPerDegree = dpd;
+}
+
+void RoboCore::Impl::setState(State state)
+{
+    enum AngleType {Velocity = 0, Position = 1};
+    switch (state)
+    {
+    case State::Search:
+        influence.angleType = AngleType::Velocity;
+        break;
+    case State::Track:
+        influence.angleType = AngleType::Position;
+        break;
+    default:
+        break;
+    }
 }

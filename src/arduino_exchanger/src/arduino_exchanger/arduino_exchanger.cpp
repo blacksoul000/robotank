@@ -35,16 +35,30 @@ namespace
     };
     struct RaspberryPkg
     {
-        int8_t bySpeed : 1;
-        int8_t deviceId : 4;
-        int8_t reserve : 3;
-        int16_t x = 0;
-        int16_t y = 0;
+        RaspberryPkg(){}
+        RaspberryPkg(const robo_core::Influence& influence)
+        {
+            angleType = influence.angleType;
+            shot = influence.shot;
+            gunV = influence.gunV;
+            cameraV = influence.cameraV;
+            leftEngine = influence.leftEngine;
+            rightEngine = influence.rightEngine;
+            towerH = influence.towerH;
+        }
+
+        uint8_t angleType: 3;
+        uint8_t shot: 1;
+        uint8_t reserve: 3;
+        int16_t gunV = 0;
+        int16_t cameraV = 0;
+        int16_t leftEngine = 0;
+        int16_t rightEngine = 0;
+        int16_t towerH = 0;
     };
 #pragma pack(pop)
 
     constexpr double positionCoef = 360.0 / 32767;
-    constexpr double influenceCoef = 90.0 / 32767;
     const int timeout = 500; // ms
 } // namespace
 
@@ -128,9 +142,9 @@ void ArduinoExchanger::Impl::readData()
 
     if (!hasNewData) return;
 
-    for (char cc: buffer)
-        std::cout << std::hex << (unsigned short)cc << " ";
-    std::cout << std::endl;
+//    for (char cc: buffer)
+//        std::cout << std::hex << (unsigned short)cc << " ";
+//    std::cout << std::endl;
 
     if (waitPrefix)
     {
@@ -177,8 +191,8 @@ void ArduinoExchanger::Impl::readData()
 
         memcpy(&lastData, &pkg, sizeof(ArduinoPkg));
 
-        ROS_WARN("gun: %f, %f, %d, %d", gun.x, gun.y, pkg.gunH, pkg.gunV);
-        ROS_WARN("camera: %f, %d", camera.y, pkg.cameraV);
+//        ROS_WARN("gun: %f, %f, %d, %d", gun.x, gun.y, pkg.gunH, pkg.gunV);
+//        ROS_WARN("camera: %f, %d", camera.y, pkg.cameraV);
         ROS_WARN("ypr: %f, %f, %f, %d, %d, %d", ypr.x, ypr.y, ypr.z, pkg.yaw, pkg.pitch, pkg.roll);
 
         lastTime = Clock::now();
@@ -268,15 +282,13 @@ void ArduinoExchanger::Impl::setBlocking (int fd, int should_block)
 
 void ArduinoExchanger::Impl::onInfluence(const robo_core::Influence& influence)
 {
-    ROS_WARN("onInfluence: %d, %d, %d", influence.deviceId, influence.x, influence.y);
-    ::RaspberryPkg pkg;
-    pkg.bySpeed = influence.bySpeed;
-    pkg.deviceId = influence.deviceId;
-    pkg.x = influence.x / ::influenceCoef;
-    pkg.y = influence.y / ::influenceCoef;
+    ::RaspberryPkg pkg(influence);
+
+//    ROS_WARN("onInfluence: %d, %d, %d, %d, %d, %d", pkg.angleType, pkg.gunV, pkg.cameraV, pkg.leftEngine, pkg.rightEngine, pkg.towerH);
 
     std::string str(prefix.begin(), prefix.end());
     write(fd, str.data(), str.length());
+
     if (write(fd, reinterpret_cast<const char *>(&pkg), sizeof(pkg)) != sizeof(pkg))
     {
         ROS_WARN("Failed to write to the bus.");
